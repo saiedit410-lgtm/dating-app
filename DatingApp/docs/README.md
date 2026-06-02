@@ -16,5 +16,13 @@ Planning, architecture, and product docs for **Spark** — an Android-first dati
 | 9 | [DevelopmentRoadmap.md](DevelopmentRoadmap.md) | Phased delivery plan |
 | 10 | [DeploymentPlan.md](DeploymentPlan.md) | Environments, CI/CD, release, ops |
 
+### Product design system
+
+| # | Document | What it covers |
+|---|----------|----------------|
+| 11 | [UI_UX_Specification.md](UI_UX_Specification.md) | Experience principles, navigation model, flow-by-flow UX |
+| 12 | [ScreenInventory.md](ScreenInventory.md) | Every screen (43) with components + L/E/Err states |
+| 13 | [DesignSystem.md](DesignSystem.md) | Color, typography, spacing, components, loading/empty/error states |
+
 > Status: **Phase 0 — Planning.** No application code yet. Decisions and structure are
 > set here before implementation begins (see roadmap).
