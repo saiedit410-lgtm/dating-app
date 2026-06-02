@@ -1,0 +1,45 @@
+# --- Flutter / Dart ---
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+*.lock           # keep pubspec.lock for apps if desired; ignore by default for now
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+*.iml
+
+# --- Android ---
+**/android/**/gradle-wrapper.jar
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/key.properties
+*.keystore
+*.jks
+
+# --- Firebase / secrets (do NOT commit prod config or keys) ---
+**/google-services.json
+**/GoogleService-Info.plist
+firebase-debug.log
+.firebase/
+.emulator-data/
+serviceAccount*.json
+.runtimeconfig.json
+
+# --- Cloud Functions (Node) ---
+backend/functions/node_modules/
+backend/functions/lib/
+admin/node_modules/
+npm-debug.log*
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Env ---
+.env
+.env.*
