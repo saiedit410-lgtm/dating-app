@@ -1,0 +1,8 @@
+# Dating App MVP Requirements
+
+Frontend: Flutter
+Backend: Firebase
+Database: Firestore
+Authentication: Firebase Auth
+Storage: Firebase Storage
+Notifications: Firebase Cloud Messaging
