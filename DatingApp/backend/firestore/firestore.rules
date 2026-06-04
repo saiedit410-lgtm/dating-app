@@ -36,8 +36,14 @@ service cloud.firestore {
 
       allow delete: if false;
 
-      // Private subdocuments (phone number, future: tokens, exact location).
+      // Private subdocuments (phone number, exact location, ...).
       match /private/{document} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // FCM device tokens (doc id == token). Owner-only; Cloud Functions read
+      // them via the Admin SDK (which bypasses rules) to send pushes.
+      match /deviceTokens/{token} {
         allow read, write: if isOwner(userId);
       }
     }

@@ -1,4 +1,5 @@
 import 'package:dating_app/core/config/env_config.dart';
+import 'package:dating_app/core/notifications/root_messenger.dart';
 import 'package:dating_app/core/routing/app_router.dart';
 import 'package:dating_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class DatingApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: env.appName,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
