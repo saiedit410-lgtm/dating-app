@@ -1,0 +1,53 @@
+name: Flutter CI
+
+# Runs static analysis, format check, codegen and tests for the mobile app.
+# Scoped to the app path so unrelated docs changes don't trigger a build.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "DatingApp/app/mobile/**"
+      - ".github/workflows/flutter-ci.yml"
+  pull_request:
+    paths:
+      - "DatingApp/app/mobile/**"
+      - ".github/workflows/flutter-ci.yml"
+
+# Avoid redundant runs on rapid pushes to the same ref.
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DatingApp/app/mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.1"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code (Riverpod)
+        run: dart run build_runner build
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test

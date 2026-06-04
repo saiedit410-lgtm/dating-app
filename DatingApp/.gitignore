@@ -4,7 +4,7 @@
 .pub-cache/
 .pub/
 build/
-*.lock           # keep pubspec.lock for apps if desired; ignore by default for now
+# NOTE: pubspec.lock IS committed for the app (reproducible builds + CI caching).
 .flutter-plugins
 .flutter-plugins-dependencies
 coverage/
