@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating_app/features/profile/domain/onboarding_draft.dart';
+import 'package:dating_app/features/profile/domain/profile_completion.dart';
 import 'package:dating_app/features/profile/domain/profile_enums.dart';
+import 'package:dating_app/features/profile/domain/profile_photo.dart';
 import 'package:dating_app/features/profile/domain/profile_repository.dart';
 import 'package:dating_app/features/profile/domain/user_profile.dart';
 
@@ -38,9 +40,18 @@ class FirestoreProfileRepository implements ProfileRepository {
         .whereType<Gender>()
         .toList();
 
+    final List<ProfilePhoto> photos =
+        ((data['photos'] as List<dynamic>?) ?? <dynamic>[])
+            .map(
+              (dynamic e) =>
+                  ProfilePhoto.fromMap((e as Map).cast<String, dynamic>()),
+            )
+            .toList();
+
     return UserProfile(
       uid: snapshot.id,
       phoneNumber: data['phoneNumber'] as String?,
+      photos: photos,
       displayName: data['displayName'] as String?,
       dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
       gender: Gender.fromName(data['gender'] as String?),
@@ -73,7 +84,15 @@ class FirestoreProfileRepository implements ProfileRepository {
       if (draft.city != null) 'city': draft.city!.trim(),
       if (draft.state != null) 'state': draft.state!.trim(),
       if (draft.country != null) 'country': draft.country!.trim(),
-      'profileCompletion': complete ? 100 : draft.completion,
+      // 5-part completion; photos are managed separately, so onboarding alone
+      // tops out at 80% until at least one photo is added.
+      'profileCompletion': ProfileCompletion.fromFlags(
+        basics: draft.validateStep(0) == null,
+        preferences: draft.validateStep(1) == null,
+        location: draft.validateStep(2) == null,
+        bio: draft.bio != null,
+        hasPhoto: false,
+      ),
       'onboardingComplete': complete,
       'updatedAt': FieldValue.serverTimestamp(),
     };

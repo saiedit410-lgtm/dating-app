@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'firebase_providers.g.dart';
@@ -11,3 +12,7 @@ FirebaseAuth firebaseAuth(Ref ref) => FirebaseAuth.instance;
 /// Singleton [FirebaseFirestore] instance (emulator wiring happens in bootstrap).
 @Riverpod(keepAlive: true)
 FirebaseFirestore firebaseFirestore(Ref ref) => FirebaseFirestore.instance;
+
+/// Singleton [FirebaseStorage] instance (emulator wiring happens in bootstrap).
+@Riverpod(keepAlive: true)
+FirebaseStorage firebaseStorage(Ref ref) => FirebaseStorage.instance;

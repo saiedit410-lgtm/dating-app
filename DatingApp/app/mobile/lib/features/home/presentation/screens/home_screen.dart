@@ -1,7 +1,9 @@
+import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/features/auth/application/auth_providers.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Authenticated landing screen.
 ///
@@ -50,6 +52,12 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: () => context.pushNamed(AppRoute.photos.routeName),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Manage photos'),
+              ),
+              const SizedBox(height: 12),
               FilledButton.tonalIcon(
                 onPressed: () => ref.read(authRepositoryProvider).signOut(),
                 icon: const Icon(Icons.logout),

@@ -60,6 +60,53 @@ final class ProfileRepositoryProvider
 
 String _$profileRepositoryHash() => r'35c413921c9c8c0629829278ffc3175d873529b0';
 
+/// The app's [PhotoRepository] (Storage blobs + Firestore metadata).
+
+@ProviderFor(photoRepository)
+final photoRepositoryProvider = PhotoRepositoryProvider._();
+
+/// The app's [PhotoRepository] (Storage blobs + Firestore metadata).
+
+final class PhotoRepositoryProvider
+    extends
+        $FunctionalProvider<PhotoRepository, PhotoRepository, PhotoRepository>
+    with $Provider<PhotoRepository> {
+  /// The app's [PhotoRepository] (Storage blobs + Firestore metadata).
+  PhotoRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'photoRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$photoRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<PhotoRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PhotoRepository create(Ref ref) {
+    return photoRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PhotoRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PhotoRepository>(value),
+    );
+  }
+}
+
+String _$photoRepositoryHash() => r'0db75420fd65345b2c5be9f31f85f1706e742502';
+
 /// Live profile of the signed-in user, or null. Emits null when signed out.
 
 @ProviderFor(currentUserProfile)

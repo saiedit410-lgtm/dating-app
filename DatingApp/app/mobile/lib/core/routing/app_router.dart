@@ -5,6 +5,7 @@ import 'package:dating_app/features/auth/presentation/screens/phone_login_screen
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
 import 'package:dating_app/features/home/presentation/screens/home_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/onboarding_screen.dart';
+import 'package:dating_app/features/profile/presentation/screens/photo_manager_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -41,7 +42,14 @@ GoRouter goRouter(Ref ref) {
               ? null
               : AppRoute.onboarding.path;
         case AppStartupStage.ready:
-          return loc == AppRoute.home.path ? null : AppRoute.home.path;
+          // Keep users out of the pre-auth / onboarding screens; allow any
+          // other authenticated route (home, photos, ...).
+          final bool isPreAuthLoc =
+              loc == AppRoute.splash.path ||
+              loc == AppRoute.login.path ||
+              loc == AppRoute.otp.path ||
+              loc == AppRoute.onboarding.path;
+          return isPreAuthLoc ? AppRoute.home.path : null;
       }
     },
     routes: <RouteBase>[
@@ -74,6 +82,12 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.home.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.photos.path,
+        name: AppRoute.photos.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const PhotoManagerScreen(),
       ),
     ],
   );
