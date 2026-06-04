@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating_app/core/theme/app_colors.dart';
+import 'package:dating_app/features/connections/presentation/widgets/connection_button.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/profile/domain/profile_enums.dart';
@@ -57,6 +58,12 @@ class _DetailScaffold extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(name)),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ConnectionButton(otherUid: profile.uid),
+        ),
+      ),
       body: ListView(
         children: <Widget>[
           _PhotoCarousel(photos: profile.photos),

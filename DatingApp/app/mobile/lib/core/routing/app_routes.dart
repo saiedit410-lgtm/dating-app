@@ -10,7 +10,9 @@ enum AppRoute {
   home('/home', 'home'),
   photos('/photos', 'photos'),
   discovery('/discovery', 'discovery'),
-  profileDetail('/profile/:uid', 'profileDetail');
+  profileDetail('/profile/:uid', 'profileDetail'),
+  requests('/requests', 'requests'),
+  connections('/connections', 'connections');
 
   const AppRoute(this.path, this.routeName);
 

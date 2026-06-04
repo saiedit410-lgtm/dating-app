@@ -3,6 +3,8 @@ import 'package:dating_app/core/routing/app_startup.dart';
 import 'package:dating_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/phone_login_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
+import 'package:dating_app/features/connections/presentation/screens/connections_screen.dart';
+import 'package:dating_app/features/connections/presentation/screens/requests_screen.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/discovery/presentation/screens/discovery_screen.dart';
 import 'package:dating_app/features/discovery/presentation/screens/profile_detail_screen.dart';
@@ -108,6 +110,18 @@ GoRouter goRouter(Ref ref) {
             initialProfile: extra is PublicProfile ? extra : null,
           );
         },
+      ),
+      GoRoute(
+        path: AppRoute.requests.path,
+        name: AppRoute.requests.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RequestsScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.connections.path,
+        name: AppRoute.connections.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ConnectionsScreen(),
       ),
     ],
   );

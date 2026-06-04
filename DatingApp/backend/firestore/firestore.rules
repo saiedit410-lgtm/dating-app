@@ -42,6 +42,62 @@ service cloud.firestore {
       }
     }
 
+    // Friend requests: `friendRequests/{fromUid}_{toUid}`.
+    match /friendRequests/{requestId} {
+      // Only the two people involved can read.
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.fromUid ||
+         request.auth.uid == resource.data.toUid);
+
+      // The sender creates a pending request involving themselves.
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.fromUid
+        && request.resource.data.fromUid != request.resource.data.toUid
+        && request.resource.data.status == 'pending'
+        && requestId ==
+            request.resource.data.fromUid + '_' + request.resource.data.toUid;
+
+      allow update: if isSignedIn()
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toUid == resource.data.toUid
+        && (
+          // Recipient accepts or rejects a pending request.
+          (request.auth.uid == resource.data.toUid
+            && resource.data.status == 'pending'
+            && request.resource.data.status in ['accepted', 'rejected'])
+          ||
+          // Sender cancels their own pending request.
+          (request.auth.uid == resource.data.fromUid
+            && resource.data.status == 'pending'
+            && request.resource.data.status == 'cancelled')
+          ||
+          // Sender re-sends after a previous reject/cancel.
+          (request.auth.uid == resource.data.fromUid
+            && resource.data.status in ['rejected', 'cancelled']
+            && request.resource.data.status == 'pending')
+        );
+
+      allow delete: if false;
+    }
+
+    // Connections: `connections/{sortedPair}`. Created by the accepting
+    // recipient of a pending request (verified via the referenced request).
+    match /connections/{connId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.users;
+
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.users
+        && request.resource.data.users.size() == 2
+        && exists(/databases/$(database)/documents/friendRequests/$(request.resource.data.requestId))
+        && get(/databases/$(database)/documents/friendRequests/$(request.resource.data.requestId)).data.toUid == request.auth.uid
+        && get(/databases/$(database)/documents/friendRequests/$(request.resource.data.requestId)).data.status == 'pending';
+
+      allow update: if false;
+      // Allow either participant to remove the connection (future
+      // unfriend / block teardown).
+      allow delete: if isSignedIn() && request.auth.uid in resource.data.users;
+    }
+
     // Secure-by-default: deny everything not explicitly allowed above.
     match /{document=**} {
       allow read, write: if false;
