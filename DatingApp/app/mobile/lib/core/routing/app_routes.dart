@@ -8,7 +8,9 @@ enum AppRoute {
   otp('/otp', 'otp'),
   onboarding('/onboarding', 'onboarding'),
   home('/home', 'home'),
-  photos('/photos', 'photos');
+  photos('/photos', 'photos'),
+  discovery('/discovery', 'discovery'),
+  profileDetail('/profile/:uid', 'profileDetail');
 
   const AppRoute(this.path, this.routeName);
 

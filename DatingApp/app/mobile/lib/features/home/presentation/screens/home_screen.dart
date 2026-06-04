@@ -53,6 +53,13 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
+                onPressed: () =>
+                    context.pushNamed(AppRoute.discovery.routeName),
+                icon: const Icon(Icons.explore_outlined),
+                label: const Text('Discover people'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
                 onPressed: () => context.pushNamed(AppRoute.photos.routeName),
                 icon: const Icon(Icons.photo_library_outlined),
                 label: const Text('Manage photos'),

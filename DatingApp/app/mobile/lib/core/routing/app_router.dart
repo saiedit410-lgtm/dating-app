@@ -3,6 +3,9 @@ import 'package:dating_app/core/routing/app_startup.dart';
 import 'package:dating_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/phone_login_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
+import 'package:dating_app/features/discovery/domain/public_profile.dart';
+import 'package:dating_app/features/discovery/presentation/screens/discovery_screen.dart';
+import 'package:dating_app/features/discovery/presentation/screens/profile_detail_screen.dart';
 import 'package:dating_app/features/home/presentation/screens/home_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/onboarding_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/photo_manager_screen.dart';
@@ -88,6 +91,23 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.photos.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const PhotoManagerScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.discovery.path,
+        name: AppRoute.discovery.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const DiscoveryScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.profileDetail.path,
+        name: AppRoute.profileDetail.routeName,
+        builder: (BuildContext context, GoRouterState state) {
+          final Object? extra = state.extra;
+          return ProfileDetailScreen(
+            uid: state.pathParameters['uid'] ?? '',
+            initialProfile: extra is PublicProfile ? extra : null,
+          );
+        },
       ),
     ],
   );

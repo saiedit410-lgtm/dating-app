@@ -2,11 +2,10 @@ rules_version = '2';
 
 // Firestore security rules.
 //
-// Users can read and edit ONLY their own `users/{uid}` document (profile +
-// onboarding). Identity and trust-controlled fields (uid, phoneNumber,
-// accountStatus, isVerified) cannot be changed by the client — they are
-// server/admin-owned per docs/SecurityRequirements.md. All other collections
-// remain closed until their feature milestone introduces rules.
+// `users/{uid}` holds the PUBLIC profile (readable by any signed-in user, for
+// discovery + profile detail). Sensitive data lives in `users/{uid}/private/*`
+// and is owner-only. Identity/trust fields (uid, accountStatus, isVerified)
+// cannot be changed by the client. Everything else is closed by default.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -19,24 +18,28 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      // Public profile fields are readable by any signed-in user (discovery).
+      allow read: if isSignedIn();
 
-      // First-login creation: must be the owner, with the locked initial state.
+      // First-login creation: only the owner, with the locked initial state.
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.accountStatus == 'active'
         && request.resource.data.isVerified == false;
 
-      // Profile/onboarding updates: owner may edit profile fields, but may not
-      // change identity (uid, phoneNumber) or trust/status (accountStatus,
-      // isVerified) fields.
+      // Profile/onboarding/photo updates: owner only; identity + trust/status
+      // fields are immutable from the client.
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
-        && request.resource.data.phoneNumber == resource.data.phoneNumber
         && request.resource.data.accountStatus == resource.data.accountStatus
         && request.resource.data.isVerified == resource.data.isVerified;
 
       allow delete: if false;
+
+      // Private subdocuments (phone number, future: tokens, exact location).
+      match /private/{document} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Secure-by-default: deny everything not explicitly allowed above.

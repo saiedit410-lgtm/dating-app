@@ -12,23 +12,31 @@ class UserRepository {
 
   /// Ensures `users/{uid}` exists after a successful login.
   ///
-  /// On first login it creates the document with the minimum schema; on
-  /// subsequent logins it only refreshes `updatedAt`. Runs in a transaction so
-  /// the create-once invariant holds even under races.
+  /// On first login it creates the PUBLIC profile document (no sensitive data)
+  /// plus the PRIVATE `users/{uid}/private/data` document holding the phone
+  /// number. On subsequent logins it only refreshes `updatedAt`. Runs in a
+  /// transaction so the create-once invariant holds even under races.
   Future<void> ensureUserDocument(AuthUser user) async {
-    final ref = _firestore.collection('users').doc(user.uid);
+    final userRef = _firestore.collection('users').doc(user.uid);
+    final privateRef = userRef.collection('private').doc('data');
     await _firestore.runTransaction((txn) async {
-      final snapshot = await txn.get(ref);
+      final snapshot = await txn.get(userRef);
       if (snapshot.exists) {
-        txn.update(ref, {'updatedAt': FieldValue.serverTimestamp()});
+        txn.update(userRef, {'updatedAt': FieldValue.serverTimestamp()});
       } else {
-        txn.set(ref, <String, Object?>{
+        // Public profile document (readable by other signed-in users).
+        txn.set(userRef, <String, Object?>{
           'uid': user.uid,
-          'phoneNumber': user.phoneNumber,
           'accountStatus': 'active',
           'isVerified': false,
+          'onboardingComplete': false,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
+        });
+        // Private document (owner-only) for sensitive data.
+        txn.set(privateRef, <String, Object?>{
+          'phoneNumber': user.phoneNumber,
+          'createdAt': FieldValue.serverTimestamp(),
         });
       }
     });
