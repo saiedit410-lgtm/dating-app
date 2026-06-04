@@ -1,8 +1,10 @@
+import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/features/auth/application/auth_providers.dart';
 import 'package:dating_app/features/connections/application/connection_providers.dart';
 import 'package:dating_app/features/connections/domain/friend_request.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Relationship-aware action button shown on a profile detail screen.
 ///
@@ -135,11 +137,14 @@ class _ConnectionButtonState extends ConsumerState<ConnectionButton> {
           ],
         );
       case RelationshipState.connected:
-        return const Center(
-          child: Chip(
-            avatar: Icon(Icons.check_circle, size: 18),
-            label: Text('Connected'),
+        return FilledButton.icon(
+          onPressed: () => context.pushNamed(
+            AppRoute.chat.routeName,
+            pathParameters: <String, String>{'uid': other},
           ),
+          icon: const Icon(Icons.forum_outlined),
+          label: const Text('Message'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
         );
     }
   }

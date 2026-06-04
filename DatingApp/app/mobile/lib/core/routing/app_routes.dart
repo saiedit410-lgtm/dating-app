@@ -12,7 +12,9 @@ enum AppRoute {
   discovery('/discovery', 'discovery'),
   profileDetail('/profile/:uid', 'profileDetail'),
   requests('/requests', 'requests'),
-  connections('/connections', 'connections');
+  connections('/connections', 'connections'),
+  chats('/chats', 'chats'),
+  chat('/chat/:uid', 'chat');
 
   const AppRoute(this.path, this.routeName);
 

@@ -3,6 +3,8 @@ import 'package:dating_app/core/routing/app_startup.dart';
 import 'package:dating_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/phone_login_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
+import 'package:dating_app/features/chat/presentation/screens/chat_screen.dart';
+import 'package:dating_app/features/chat/presentation/screens/conversations_list_screen.dart';
 import 'package:dating_app/features/connections/presentation/screens/connections_screen.dart';
 import 'package:dating_app/features/connections/presentation/screens/requests_screen.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
@@ -122,6 +124,18 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.connections.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const ConnectionsScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.chats.path,
+        name: AppRoute.chats.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ConversationsListScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.chat.path,
+        name: AppRoute.chat.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ChatScreen(otherUid: state.pathParameters['uid'] ?? ''),
       ),
     ],
   );

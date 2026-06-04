@@ -100,11 +100,26 @@ class FirestoreConnectionRepository implements ConnectionRepository {
       'status': RequestStatus.accepted.name,
       'respondedAt': FieldValue.serverTimestamp(),
     });
-    batch.set(_connections.doc(ConnectionIds.connection(fromUid, toUid)), <String, Object?>{
+    final String pairId = ConnectionIds.connection(fromUid, toUid);
+    batch.set(_connections.doc(pairId), <String, Object?>{
       'users': <String>[fromUid, toUid]..sort(),
       'requestId': requestId,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    // Auto-create the conversation (deterministic id == connection id) so the
+    // pair can chat immediately. Verified in rules via the pending request.
+    batch.set(
+      _firestore.collection('conversations').doc(pairId),
+      <String, Object?>{
+        'participants': <String>[fromUid, toUid]..sort(),
+        'requestId': requestId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastMessageText': null,
+        'lastMessageSenderId': null,
+      },
+      SetOptions(merge: true),
+    );
     await batch.commit();
   }
 

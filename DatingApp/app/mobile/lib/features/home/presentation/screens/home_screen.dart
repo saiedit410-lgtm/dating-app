@@ -28,7 +28,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -70,6 +70,12 @@ class HomeScreen extends ConsumerWidget {
                     context.pushNamed(AppRoute.connections.routeName),
                 icon: const Icon(Icons.people_outline),
                 label: const Text('Connections'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => context.pushNamed(AppRoute.chats.routeName),
+                icon: const Icon(Icons.forum_outlined),
+                label: const Text('Messages'),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
