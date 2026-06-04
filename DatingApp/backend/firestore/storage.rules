@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Initial SECURE-BY-DEFAULT Cloud Storage rules for spark-dev.
+//
+// Denies all access until the real path-scoped rules (profile photos,
+// verification selfies, chat images) are added in their feature milestones,
+// per docs/FirebaseArchitecture.md and docs/SecurityRequirements.md.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

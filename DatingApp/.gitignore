@@ -22,9 +22,11 @@ coverage/
 # --- Firebase / secrets (do NOT commit prod config or keys) ---
 **/google-services.json
 **/GoogleService-Info.plist
-firebase-debug.log
+# Firebase CLI + Emulator Suite debug logs (firebase-, firestore-, ui-, storage-, ...)
+*-debug.log
 .firebase/
 .emulator-data/
+firebase-export-*/
 serviceAccount*.json
 .runtimeconfig.json
 
