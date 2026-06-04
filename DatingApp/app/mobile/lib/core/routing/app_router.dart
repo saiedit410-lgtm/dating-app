@@ -1,49 +1,48 @@
 import 'package:dating_app/core/routing/app_routes.dart';
-import 'package:dating_app/features/auth/application/auth_providers.dart';
+import 'package:dating_app/core/routing/app_startup.dart';
 import 'package:dating_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/phone_login_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
 import 'package:dating_app/features/home/presentation/screens/home_screen.dart';
+import 'package:dating_app/features/profile/presentation/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
 
-/// The application's [GoRouter] with auth-aware route guards.
+/// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
-/// Reacts to [authStateChangesProvider]:
-///  * session still resolving  -> Splash
-///  * signed out               -> Login (and the OTP step)
-///  * signed in                -> Home
+/// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
+/// rebuilds when the routing decision changes — not on every profile edit:
+///  * loading   -> Splash
+///  * loggedOut -> Login / OTP
+///  * onboarding-> Onboarding
+///  * ready      -> Home
 @Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
-  final authState = ref.watch(authStateChangesProvider);
+  final AppStartupStage stage = ref.watch(appStartupStageProvider);
 
   return GoRouter(
     initialLocation: AppRoute.splash.path,
     debugLogDiagnostics: true,
     redirect: (BuildContext context, GoRouterState state) {
-      final String location = state.matchedLocation;
-      final bool inAuthFlow =
-          location == AppRoute.login.path || location == AppRoute.otp.path;
+      final String loc = state.matchedLocation;
 
-      // Persisted session is still being restored: hold on the splash screen.
-      if (authState.isLoading) {
-        return location == AppRoute.splash.path ? null : AppRoute.splash.path;
+      switch (stage) {
+        case AppStartupStage.loading:
+          return loc == AppRoute.splash.path ? null : AppRoute.splash.path;
+        case AppStartupStage.loggedOut:
+          final bool inAuthFlow =
+              loc == AppRoute.login.path || loc == AppRoute.otp.path;
+          return inAuthFlow ? null : AppRoute.login.path;
+        case AppStartupStage.onboarding:
+          return loc == AppRoute.onboarding.path
+              ? null
+              : AppRoute.onboarding.path;
+        case AppStartupStage.ready:
+          return loc == AppRoute.home.path ? null : AppRoute.home.path;
       }
-
-      final bool loggedIn = authState.value != null;
-
-      if (!loggedIn) {
-        return inAuthFlow ? null : AppRoute.login.path;
-      }
-
-      // Signed in: keep users out of the splash/auth screens.
-      if (location == AppRoute.splash.path || inAuthFlow) {
-        return AppRoute.home.path;
-      }
-      return null;
     },
     routes: <RouteBase>[
       GoRoute(
@@ -63,6 +62,12 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.otp.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const OtpVerificationScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.onboarding.path,
+        name: AppRoute.onboarding.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoute.home.path,

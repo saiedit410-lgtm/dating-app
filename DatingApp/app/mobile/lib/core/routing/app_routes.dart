@@ -6,6 +6,7 @@ enum AppRoute {
   splash('/', 'splash'),
   login('/login', 'login'),
   otp('/otp', 'otp'),
+  onboarding('/onboarding', 'onboarding'),
   home('/home', 'home');
 
   const AppRoute(this.path, this.routeName);

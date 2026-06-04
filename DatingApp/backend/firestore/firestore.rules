@@ -2,11 +2,11 @@ rules_version = '2';
 
 // Firestore security rules.
 //
-// Phase 1.2B: users can read and maintain ONLY their own `users/{uid}`
-// document. Trust-controlled fields (accountStatus, isVerified) cannot be
-// changed by the client — they are server/admin-owned per
-// docs/SecurityRequirements.md. All other collections remain closed until
-// their feature milestone introduces rules.
+// Users can read and edit ONLY their own `users/{uid}` document (profile +
+// onboarding). Identity and trust-controlled fields (uid, phoneNumber,
+// accountStatus, isVerified) cannot be changed by the client — they are
+// server/admin-owned per docs/SecurityRequirements.md. All other collections
+// remain closed until their feature milestone introduces rules.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -27,9 +27,12 @@ service cloud.firestore {
         && request.resource.data.accountStatus == 'active'
         && request.resource.data.isVerified == false;
 
-      // Updates may not change identity or trust/status fields from the client.
+      // Profile/onboarding updates: owner may edit profile fields, but may not
+      // change identity (uid, phoneNumber) or trust/status (accountStatus,
+      // isVerified) fields.
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
+        && request.resource.data.phoneNumber == resource.data.phoneNumber
         && request.resource.data.accountStatus == resource.data.accountStatus
         && request.resource.data.isVerified == resource.data.isVerified;
 

@@ -8,32 +8,38 @@ part of 'app_router.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The application's [GoRouter] with auth-aware route guards.
+/// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
-/// Reacts to [authStateChangesProvider]:
-///  * session still resolving  -> Splash
-///  * signed out               -> Login (and the OTP step)
-///  * signed in                -> Home
+/// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
+/// rebuilds when the routing decision changes — not on every profile edit:
+///  * loading   -> Splash
+///  * loggedOut -> Login / OTP
+///  * onboarding-> Onboarding
+///  * ready      -> Home
 
 @ProviderFor(goRouter)
 final goRouterProvider = GoRouterProvider._();
 
-/// The application's [GoRouter] with auth-aware route guards.
+/// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
-/// Reacts to [authStateChangesProvider]:
-///  * session still resolving  -> Splash
-///  * signed out               -> Login (and the OTP step)
-///  * signed in                -> Home
+/// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
+/// rebuilds when the routing decision changes — not on every profile edit:
+///  * loading   -> Splash
+///  * loggedOut -> Login / OTP
+///  * onboarding-> Onboarding
+///  * ready      -> Home
 
 final class GoRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
-  /// The application's [GoRouter] with auth-aware route guards.
+  /// The application's [GoRouter] with auth + onboarding aware route guards.
   ///
-  /// Reacts to [authStateChangesProvider]:
-  ///  * session still resolving  -> Splash
-  ///  * signed out               -> Login (and the OTP step)
-  ///  * signed in                -> Home
+  /// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
+  /// rebuilds when the routing decision changes — not on every profile edit:
+  ///  * loading   -> Splash
+  ///  * loggedOut -> Login / OTP
+  ///  * onboarding-> Onboarding
+  ///  * ready      -> Home
   GoRouterProvider._()
     : super(
         from: null,
@@ -67,4 +73,4 @@ final class GoRouterProvider
   }
 }
 
-String _$goRouterHash() => r'2abdff73831642d80ad186897ca663493a3812e4';
+String _$goRouterHash() => r'1b81c71d606e7b5b0b0348a1954057cdf713292d';
