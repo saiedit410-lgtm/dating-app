@@ -8,26 +8,32 @@ part of 'app_router.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// The application's [GoRouter], exposed as a keep-alive provider so route
-/// guards (added in later milestones) can react to auth/session providers.
+/// The application's [GoRouter] with auth-aware route guards.
 ///
-/// The initial route is the [SplashScreen].
+/// Reacts to [authStateChangesProvider]:
+///  * session still resolving  -> Splash
+///  * signed out               -> Login (and the OTP step)
+///  * signed in                -> Home
 
 @ProviderFor(goRouter)
 final goRouterProvider = GoRouterProvider._();
 
-/// The application's [GoRouter], exposed as a keep-alive provider so route
-/// guards (added in later milestones) can react to auth/session providers.
+/// The application's [GoRouter] with auth-aware route guards.
 ///
-/// The initial route is the [SplashScreen].
+/// Reacts to [authStateChangesProvider]:
+///  * session still resolving  -> Splash
+///  * signed out               -> Login (and the OTP step)
+///  * signed in                -> Home
 
 final class GoRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
-  /// The application's [GoRouter], exposed as a keep-alive provider so route
-  /// guards (added in later milestones) can react to auth/session providers.
+  /// The application's [GoRouter] with auth-aware route guards.
   ///
-  /// The initial route is the [SplashScreen].
+  /// Reacts to [authStateChangesProvider]:
+  ///  * session still resolving  -> Splash
+  ///  * signed out               -> Login (and the OTP step)
+  ///  * signed in                -> Home
   GoRouterProvider._()
     : super(
         from: null,
@@ -61,4 +67,4 @@ final class GoRouterProvider
   }
 }
 
-String _$goRouterHash() => r'44738e55f8b0d7f75d4b03c031b3a1d4dd160f57';
+String _$goRouterHash() => r'2abdff73831642d80ad186897ca663493a3812e4';
