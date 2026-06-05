@@ -144,3 +144,109 @@ final class ProfileByIdFamily extends $Family
   @override
   String toString() => r'profileByIdProvider';
 }
+
+/// The app's [NearbySearchRepository] (Firestore-backed, geohash-bucketed).
+
+@ProviderFor(nearbySearchRepository)
+final nearbySearchRepositoryProvider = NearbySearchRepositoryProvider._();
+
+/// The app's [NearbySearchRepository] (Firestore-backed, geohash-bucketed).
+
+final class NearbySearchRepositoryProvider
+    extends
+        $FunctionalProvider<
+          NearbySearchRepository,
+          NearbySearchRepository,
+          NearbySearchRepository
+        >
+    with $Provider<NearbySearchRepository> {
+  /// The app's [NearbySearchRepository] (Firestore-backed, geohash-bucketed).
+  NearbySearchRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nearbySearchRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$nearbySearchRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<NearbySearchRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  NearbySearchRepository create(Ref ref) {
+    return nearbySearchRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NearbySearchRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NearbySearchRepository>(value),
+    );
+  }
+}
+
+String _$nearbySearchRepositoryHash() =>
+    r'18efbc70f32308b79a5ede3643f7fd92cfd4f8d4';
+
+/// The app's [LocationRepository] (`geolocator` + Firestore-backed).
+
+@ProviderFor(locationRepository)
+final locationRepositoryProvider = LocationRepositoryProvider._();
+
+/// The app's [LocationRepository] (`geolocator` + Firestore-backed).
+
+final class LocationRepositoryProvider
+    extends
+        $FunctionalProvider<
+          LocationRepository,
+          LocationRepository,
+          LocationRepository
+        >
+    with $Provider<LocationRepository> {
+  /// The app's [LocationRepository] (`geolocator` + Firestore-backed).
+  LocationRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'locationRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$locationRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<LocationRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  LocationRepository create(Ref ref) {
+    return locationRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LocationRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LocationRepository>(value),
+    );
+  }
+}
+
+String _$locationRepositoryHash() =>
+    r'ea84467af35d4e9c05dd5227136e33991b12efd8';

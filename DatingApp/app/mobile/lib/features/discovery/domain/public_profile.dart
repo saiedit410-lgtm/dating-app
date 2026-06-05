@@ -18,6 +18,7 @@ class PublicProfile {
     this.country,
     this.photos = const <ProfilePhoto>[],
     this.isVerified = false,
+    this.geohash,
   });
 
   /// Builds a [PublicProfile] from a `users/{uid}` document's public fields.
@@ -47,6 +48,9 @@ class PublicProfile {
       country: data['country'] as String?,
       photos: photos,
       isVerified: data['isVerified'] as bool? ?? false,
+      // Public geohash is what the nearby tab uses to compute distance to
+      // this profile. Exact coords never live on this doc.
+      geohash: data['geohash'] as String?,
     );
   }
 
@@ -62,6 +66,11 @@ class PublicProfile {
   final String? country;
   final List<ProfilePhoto> photos;
   final bool isVerified;
+
+  /// Coarse public geohash of the subject (precision 6). Used to compute
+  /// the viewer->subject distance in the nearby tab. Exact lat/lng live
+  /// on `users/{uid}/private/data` (owner + admin only).
+  final String? geohash;
 
   String? get primaryPhotoUrl => photos.isEmpty ? null : photos.first.url;
 
