@@ -5,6 +5,7 @@ import 'package:dating_app/features/discovery/application/discovery_providers.da
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/profile/domain/profile_enums.dart';
 import 'package:dating_app/features/profile/domain/profile_photo.dart';
+import 'package:dating_app/features/safety/presentation/widgets/profile_safety_menu.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,7 +58,10 @@ class _DetailScaffold extends StatelessWidget {
     final String title = profile.age == null ? name : '$name, ${profile.age}';
 
     return Scaffold(
-      appBar: AppBar(title: Text(name)),
+      appBar: AppBar(
+        title: Text(name),
+        actions: <Widget>[ProfileSafetyMenu(otherUid: profile.uid)],
+      ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),

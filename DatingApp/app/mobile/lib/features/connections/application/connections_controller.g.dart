@@ -45,7 +45,7 @@ final class ConnectionsControllerProvider
 }
 
 String _$connectionsControllerHash() =>
-    r'12ad986b97c9d0f1451a2fe160cceda517283916';
+    r'0b5951fcb437fecd32b7f4f03fb667aecd311300';
 
 /// Loads the signed-in user's accepted connections with cursor pagination.
 

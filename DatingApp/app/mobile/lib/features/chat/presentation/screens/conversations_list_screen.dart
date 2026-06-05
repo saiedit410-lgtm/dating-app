@@ -2,6 +2,7 @@ import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/features/chat/application/chat_providers.dart';
 import 'package:dating_app/features/chat/domain/conversation.dart';
 import 'package:dating_app/features/chat/presentation/widgets/conversation_tile.dart';
+import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +24,13 @@ class ConversationsListScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, StackTrace _) =>
             const Center(child: Text('Could not load conversations.')),
-        data: (List<Conversation> conversations) {
+        data: (List<Conversation> all) {
+          // Hide conversations with blocked users (either direction).
+          final Set<String> blocked =
+              ref.watch(blockedUidsProvider).value ?? const <String>{};
+          final List<Conversation> conversations = all
+              .where((Conversation c) => !blocked.contains(c.otherUid))
+              .toList();
           if (conversations.isEmpty) {
             return _empty(context);
           }

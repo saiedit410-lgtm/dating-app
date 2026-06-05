@@ -3,6 +3,7 @@ import 'package:dating_app/features/chat/application/chat_controller.dart';
 import 'package:dating_app/features/chat/domain/message.dart';
 import 'package:dating_app/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
+import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,18 +59,44 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ref.watch(profileByIdProvider(widget.otherUid)).value?.displayName ??
         'Chat';
 
+    final bool isBlocked = (ref
+            .watch(blockedUidsProvider)
+            .value ??
+        const <String>{}).contains(widget.otherUid);
+
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: Column(
           children: <Widget>[
             Expanded(child: _messages(state, me)),
-            _composer(state),
+            if (isBlocked) _blockedBar() else _composer(state),
           ],
         ),
       ),
     );
   }
+
+  Widget _blockedBar() => Material(
+    color: context.colorScheme.surfaceContainerHighest,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.block, color: context.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'This conversation is unavailable.',
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _messages(ChatState state, String? me) {
     if (state.status == ChatStatus.loading) {

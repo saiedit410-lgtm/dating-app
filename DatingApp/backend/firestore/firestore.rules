@@ -17,6 +17,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // True if either user has blocked the other (directional block docs).
+    function isBlockedBetween(a, b) {
+      return exists(/databases/$(database)/documents/blocks/$(a + '_' + b))
+        || exists(/databases/$(database)/documents/blocks/$(b + '_' + a));
+    }
+
     match /users/{userId} {
       // Public profile fields are readable by any signed-in user (discovery).
       allow read: if isSignedIn();
@@ -55,13 +61,16 @@ service cloud.firestore {
         (request.auth.uid == resource.data.fromUid ||
          request.auth.uid == resource.data.toUid);
 
-      // The sender creates a pending request involving themselves.
+      // The sender creates a pending request involving themselves — unless a
+      // block exists between the two users.
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.fromUid
         && request.resource.data.fromUid != request.resource.data.toUid
         && request.resource.data.status == 'pending'
         && requestId ==
-            request.resource.data.fromUid + '_' + request.resource.data.toUid;
+            request.resource.data.fromUid + '_' + request.resource.data.toUid
+        && !isBlockedBetween(
+            request.resource.data.fromUid, request.resource.data.toUid);
 
       allow update: if isSignedIn()
         && request.resource.data.fromUid == resource.data.fromUid
@@ -135,16 +144,52 @@ service cloud.firestore {
         function participants() {
           return get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
         }
+        function otherParticipant() {
+          return participants()[0] == request.auth.uid
+            ? participants()[1] : participants()[0];
+        }
 
         allow read: if isSignedIn() && request.auth.uid in participants();
 
+        // Cannot message if a block exists between the two participants.
         allow create: if isSignedIn()
           && request.resource.data.senderId == request.auth.uid
-          && request.auth.uid in participants();
+          && request.auth.uid in participants()
+          && !isBlockedBetween(request.auth.uid, otherParticipant());
 
         // Immutable in this phase (no edit/delete UI yet).
         allow update, delete: if false;
       }
+    }
+
+    // Blocks: `blocks/{blockerUid}_{blockedUid}`.
+    match /blocks/{blockId} {
+      // Both parties may read (needed for mutual-invisibility filtering).
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.blockerUid ||
+         request.auth.uid == resource.data.blockedUid);
+
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.blockerUid
+        && request.resource.data.blockerUid != request.resource.data.blockedUid
+        && blockId ==
+            request.resource.data.blockerUid + '_' +
+            request.resource.data.blockedUid;
+
+      allow update: if false;
+      // Only the blocker can unblock.
+      allow delete: if isSignedIn() &&
+        request.auth.uid == resource.data.blockerUid;
+    }
+
+    // Reports: `reports/{reportId}`. Users may create reports about others;
+    // they cannot read, modify, or delete any report (moderation is done by
+    // admins via the Admin SDK / a future dashboard).
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.reporterUid
+        && request.resource.data.reporterUid != request.resource.data.reportedUid;
+      allow read, update, delete: if false;
     }
 
     // Secure-by-default: deny everything not explicitly allowed above.

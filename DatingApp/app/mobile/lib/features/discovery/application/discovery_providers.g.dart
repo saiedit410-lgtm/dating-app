@@ -61,59 +61,6 @@ final class DiscoveryRepositoryProvider
 String _$discoveryRepositoryHash() =>
     r'ff0f4637def6459b33b27239a6209bb5cd7961a4';
 
-/// The set of uids the current user has blocked.
-///
-/// Blocking ships in a later milestone; this is the seam discovery already
-/// honours — any uid emitted here is excluded from the feed and detail views.
-
-@ProviderFor(blockedUids)
-final blockedUidsProvider = BlockedUidsProvider._();
-
-/// The set of uids the current user has blocked.
-///
-/// Blocking ships in a later milestone; this is the seam discovery already
-/// honours — any uid emitted here is excluded from the feed and detail views.
-
-final class BlockedUidsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<Set<String>>,
-          Set<String>,
-          Stream<Set<String>>
-        >
-    with $FutureModifier<Set<String>>, $StreamProvider<Set<String>> {
-  /// The set of uids the current user has blocked.
-  ///
-  /// Blocking ships in a later milestone; this is the seam discovery already
-  /// honours — any uid emitted here is excluded from the feed and detail views.
-  BlockedUidsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'blockedUidsProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$blockedUidsHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<Set<String>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<Set<String>> create(Ref ref) {
-    return blockedUids(ref);
-  }
-}
-
-String _$blockedUidsHash() => r'31aacdd5b56c8c7c5e1007dfb9269baaa0220f99';
-
 /// One public profile by id (detail screen / deep links).
 
 @ProviderFor(profileById)

@@ -2,6 +2,7 @@ import 'package:dating_app/features/auth/application/auth_providers.dart';
 import 'package:dating_app/features/connections/application/connection_providers.dart';
 import 'package:dating_app/features/connections/domain/connection.dart';
 import 'package:dating_app/features/connections/domain/connection_repository.dart';
+import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connections_controller.g.dart';
@@ -81,9 +82,15 @@ class ConnectionsController extends _$ConnectionsController {
             cursor: reset ? null : state.cursor,
             limit: _pageSize,
           );
+      // Blocked users (either direction) must not appear in connections.
+      final Set<String> blocked =
+          ref.read(blockedUidsProvider).value ?? const <String>{};
+      final List<Connection> visible = page.connections
+          .where((Connection c) => !blocked.contains(c.otherUid))
+          .toList();
       final List<Connection> merged = reset
-          ? page.connections
-          : <Connection>[...state.connections, ...page.connections];
+          ? visible
+          : <Connection>[...state.connections, ...visible];
       state = ConnectionsState(
         connections: merged,
         status: ConnectionsStatus.loaded,

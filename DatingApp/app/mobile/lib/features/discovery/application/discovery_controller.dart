@@ -3,6 +3,7 @@ import 'package:dating_app/features/discovery/application/discovery_filters_cont
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
 import 'package:dating_app/features/discovery/domain/discovery_filters.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
+import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'discovery_controller.g.dart';

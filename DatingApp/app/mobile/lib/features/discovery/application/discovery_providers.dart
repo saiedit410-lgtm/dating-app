@@ -11,16 +11,6 @@ part 'discovery_providers.g.dart';
 DiscoveryRepository discoveryRepository(Ref ref) =>
     FirestoreDiscoveryRepository(ref.watch(firebaseFirestoreProvider));
 
-/// The set of uids the current user has blocked.
-///
-/// Blocking ships in a later milestone; this is the seam discovery already
-/// honours — any uid emitted here is excluded from the feed and detail views.
-@Riverpod(keepAlive: true)
-Stream<Set<String>> blockedUids(Ref ref) {
-  // TODO(blocking): stream from users/{uid}/private blocklist once it exists.
-  return Stream<Set<String>>.value(const <String>{});
-}
-
 /// One public profile by id (detail screen / deep links).
 @riverpod
 Future<PublicProfile?> profileById(Ref ref, String uid) =>
