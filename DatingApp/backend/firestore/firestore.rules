@@ -17,6 +17,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Admins carry a custom claim. Used for verification approval/rejection and
+    // (later) the moderation dashboard.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
     // True if either user has blocked the other (directional block docs).
     function isBlockedBetween(a, b) {
       return exists(/databases/$(database)/documents/blocks/$(a + '_' + b))
@@ -33,12 +39,14 @@ service cloud.firestore {
         && request.resource.data.accountStatus == 'active'
         && request.resource.data.isVerified == false;
 
-      // Profile/onboarding/photo updates: owner only; identity + trust/status
-      // fields are immutable from the client.
-      allow update: if isOwner(userId)
+      // Profile/onboarding/photo updates: owner may edit profile fields, but
+      // identity + trust/status fields are immutable from the client. Admins
+      // (e.g. verification approval) may change them.
+      allow update: if (isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.accountStatus == resource.data.accountStatus
-        && request.resource.data.isVerified == resource.data.isVerified;
+        && request.resource.data.isVerified == resource.data.isVerified)
+        || isAdmin();
 
       allow delete: if false;
 
@@ -190,6 +198,21 @@ service cloud.firestore {
         && request.auth.uid == request.resource.data.reporterUid
         && request.resource.data.reporterUid != request.resource.data.reportedUid;
       allow read, update, delete: if false;
+    }
+
+    // Verification requests: `verificationRequests/{uid}` (doc id == uid).
+    match /verificationRequests/{requestId} {
+      // Owner reads their own request; admins read any (review queue).
+      allow read: if isOwner(requestId) || isAdmin();
+
+      // The user submits/re-submits their OWN request as pending; only admins
+      // can move it to approved/rejected (users cannot approve themselves).
+      allow create, update: if (isOwner(requestId)
+          && request.resource.data.uid == requestId
+          && request.resource.data.status == 'pending')
+        || isAdmin();
+
+      allow delete: if false;
     }
 
     // Secure-by-default: deny everything not explicitly allowed above.

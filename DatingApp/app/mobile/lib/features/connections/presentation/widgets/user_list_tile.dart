@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
+import 'package:dating_app/shared/widgets/verified_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,7 +42,15 @@ class UserListTile extends ConsumerWidget {
             url != null ? CachedNetworkImageProvider(url) : null,
         child: url == null ? const Icon(Icons.person_outline) : null,
       ),
-      title: Text(title),
+      title: Row(
+        children: <Widget>[
+          Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+          if (profile?.isVerified ?? false) ...<Widget>[
+            const SizedBox(width: 4),
+            const VerifiedBadge(size: 16),
+          ],
+        ],
+      ),
       subtitle: (profile?.locationLabel.isNotEmpty ?? false)
           ? Text(profile!.locationLabel)
           : null,

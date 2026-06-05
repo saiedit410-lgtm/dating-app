@@ -22,6 +22,8 @@ class UserProfile {
     this.profileCompletion = 0,
     this.onboardingComplete = false,
     this.isVerified = false,
+    this.verificationStatus,
+    this.verifiedAt,
     this.accountStatus = 'active',
   });
 
@@ -43,6 +45,10 @@ class UserProfile {
   final int profileCompletion;
   final bool onboardingComplete;
   final bool isVerified;
+
+  /// Raw verification status: `pending` / `approved` / `rejected` (or null).
+  final String? verificationStatus;
+  final DateTime? verifiedAt;
   final String accountStatus;
 
   /// Age in whole years derived from [dateOfBirth], or null if unset.

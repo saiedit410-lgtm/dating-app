@@ -33,6 +33,14 @@
         { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
         { "fieldPath": "lastMessageAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "verificationRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

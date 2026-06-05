@@ -14,7 +14,8 @@ enum AppRoute {
   requests('/requests', 'requests'),
   connections('/connections', 'connections'),
   chats('/chats', 'chats'),
-  chat('/chat/:uid', 'chat');
+  chat('/chat/:uid', 'chat'),
+  verification('/verification', 'verification');
 
   const AppRoute(this.path, this.routeName);
 

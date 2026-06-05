@@ -84,6 +84,13 @@ class HomeScreen extends ConsumerWidget {
                 label: const Text('Manage photos'),
               ),
               const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.pushNamed(AppRoute.verification.routeName),
+                icon: const Icon(Icons.verified_user_outlined),
+                label: const Text('Get verified'),
+              ),
+              const SizedBox(height: 12),
               FilledButton.tonalIcon(
                 onPressed: () => ref.read(authRepositoryProvider).signOut(),
                 icon: const Icon(Icons.logout),

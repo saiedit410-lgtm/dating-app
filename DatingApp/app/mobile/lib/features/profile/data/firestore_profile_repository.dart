@@ -67,6 +67,8 @@ class FirestoreProfileRepository implements ProfileRepository {
       profileCompletion: (data['profileCompletion'] as num?)?.toInt() ?? 0,
       onboardingComplete: data['onboardingComplete'] as bool? ?? false,
       isVerified: data['isVerified'] as bool? ?? false,
+      verificationStatus: data['verificationStatus'] as String?,
+      verifiedAt: (data['verifiedAt'] as Timestamp?)?.toDate(),
       accountStatus: data['accountStatus'] as String? ?? 'active',
     );
   }

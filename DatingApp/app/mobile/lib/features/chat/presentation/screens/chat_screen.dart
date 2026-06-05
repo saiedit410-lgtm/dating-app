@@ -3,8 +3,10 @@ import 'package:dating_app/features/chat/application/chat_controller.dart';
 import 'package:dating_app/features/chat/domain/message.dart';
 import 'package:dating_app/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
+import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
+import 'package:dating_app/shared/widgets/verified_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,9 +57,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final String? me = ref.watch(authStateChangesProvider).value?.uid;
     final ChatState state = ref.watch(chatControllerProvider(widget.otherUid));
-    final String title =
-        ref.watch(profileByIdProvider(widget.otherUid)).value?.displayName ??
-        'Chat';
+    final PublicProfile? otherProfile = ref
+        .watch(profileByIdProvider(widget.otherUid))
+        .value;
+    final String title = otherProfile?.displayName ?? 'Chat';
 
     final bool isBlocked = (ref
             .watch(blockedUidsProvider)
@@ -65,7 +68,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         const <String>{}).contains(widget.otherUid);
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Row(
+          children: <Widget>[
+            Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+            if (otherProfile?.isVerified ?? false) ...<Widget>[
+              const SizedBox(width: 6),
+              const VerifiedBadge(size: 18),
+            ],
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: <Widget>[

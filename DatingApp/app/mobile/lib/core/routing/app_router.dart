@@ -13,6 +13,7 @@ import 'package:dating_app/features/discovery/presentation/screens/profile_detai
 import 'package:dating_app/features/home/presentation/screens/home_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/onboarding_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/photo_manager_screen.dart';
+import 'package:dating_app/features/verification/presentation/screens/verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -136,6 +137,12 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.chat.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             ChatScreen(otherUid: state.pathParameters['uid'] ?? ''),
+      ),
+      GoRoute(
+        path: AppRoute.verification.path,
+        name: AppRoute.verification.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const VerificationScreen(),
       ),
     ],
   );

@@ -12,6 +12,10 @@ service firebase.storage {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     match /users/{uid}/photos/{photoId} {
       allow read: if isOwner(uid);
 
@@ -20,6 +24,17 @@ service firebase.storage {
         && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
 
       allow delete: if isOwner(uid);
+    }
+
+    // Verification selfies: owner uploads; owner + admins (reviewers) read.
+    match /users/{uid}/verification/{file} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      allow write: if isOwner(uid)
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
+
+      allow delete: if isOwner(uid) || isAdmin();
     }
 
     // Secure-by-default: deny anything not explicitly allowed above.
