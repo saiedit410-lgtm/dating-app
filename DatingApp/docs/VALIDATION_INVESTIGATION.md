@@ -1,109 +1,114 @@
 # Validation Investigation
 
-Investigation date: 2026-06-05
+Investigation date: 2026-06-06
 Repository path: `DatingApp`
 Flutter app path: `DatingApp/app/mobile`
+Commit under validation: `2c200b5` (`docs: add validation investigation`)
 
-## Root cause
+## Summary
 
-The Flutter validation failures were caused by a broken local Pub cache on the machine, not by missing code in the repository.
+A full Flutter validation pass (`flutter pub get` → `flutter analyze` →
+`flutter test` → `flutter build apk --debug`) was executed against the
+current `main` HEAD. **No environment or build repair was required.**
+All three validation commands succeeded on the first run.
 
-### Observed symptoms
+The previous investigation (2026-06-05, commit `2c200b5`) attributed
+earlier failures to a broken local Pub cache and applied a cache
+repair. This re-run confirms that the cache has stayed healthy and
+that the project builds cleanly from the current state.
 
-Initial failures from `flutter analyze`, `flutter test`, and `flutter build apk --debug` all pointed to missing package files under the local Pub cache, including:
+## Root cause (this run)
 
-- `flutter_riverpod`
-- `riverpod_annotation`
-- `firebase_core`
-- `firebase_messaging`
-- `cloud_firestore`
-- `vector_math`
-- `characters`
-- `leak_tracker_flutter_testing`
+None — validation passed end-to-end without intervention.
 
-The app still had a valid `pubspec.lock`, and `.dart_tool/package_config.json` referenced package locations in the local cache, but the underlying package directories/files were absent or unreadable. That left Flutter with package URIs that resolved in configuration only, not on disk.
+The earlier 2026-06-05 root cause (corrupted local Pub cache at
+`C:\Users\sailesah\AppData\Local\Pub\Cache`) is no longer present.
+The dependency graph, generated files, and toolchain are in a
+healthy, reproducible state.
 
-### Why validation failed
+## Fixes applied (this run)
 
-- `flutter analyze` failed because Dart could not resolve package imports referenced by the app and generated files.
-- `flutter test` failed because both app dependencies and Flutter test transitive dependencies were missing from the local cache.
-- `flutter build apk --debug` failed for the same reason during kernel snapshot compilation.
+None required. Steps that were *available* and considered, but not
+needed:
 
-In short: the project dependency graph was correct, but the developer environment had a corrupted or incomplete Pub cache.
+- `flutter pub cache repair` — not run (no cache errors observed).
+- `flutter clean` — not run (no stale build artifacts blocked the
+  build).
+- `dart run build_runner build --delete-conflicting-outputs` — not
+  run (no codegen drift detected; existing `*.g.dart` files
+  resolved cleanly under `flutter pub get`).
 
-## Fixes applied
+The only file modified in the working tree during this investigation
+is this document itself.
 
-The following environment-repair steps were executed in `DatingApp/app/mobile`:
+## Toolchain state
 
-1. Verified toolchain state
-   - confirmed Flutter `3.44.1`
-   - confirmed Dart `3.12.1`
-
-2. Verified cache integrity
-   - checked the local Pub cache path at `C:\Users\sailesah\AppData\Local\Pub\Cache`
-   - confirmed required package folders/files were missing before repair
-
-3. Repaired the Pub cache
-   - ran `flutter pub cache repair`
-   - this reinstalled missing/corrupted cached packages
-
-4. Reset the local Flutter build state
-   - ran `flutter clean`
-
-5. Restored project dependencies
-   - ran `flutter pub get`
-
-6. Regenerated codegen outputs
-   - ran `dart run build_runner build --delete-conflicting-outputs`
-   - this refreshed Riverpod-generated files after dependency restoration
-
-## Pub cache integrity verification
-
-After repair, the required package files were present again in the local cache, including:
-
-- `flutter_riverpod-3.3.1/lib/flutter_riverpod.dart`
-- `riverpod_annotation-4.0.2/lib/riverpod_annotation.dart`
-- `firebase_core-4.10.0/lib/firebase_core.dart`
-- `firebase_messaging-16.3.0/lib/firebase_messaging.dart`
-- `cloud_firestore-6.5.0/lib/cloud_firestore.dart`
-- `vector_math-2.2.0/lib/vector_math_64.dart`
-- `characters-1.4.1/lib/characters.dart`
-- `leak_tracker_flutter_testing-3.0.10/lib/leak_tracker_flutter_testing.dart`
-
-This confirmed the root issue was environmental and that the cache repair succeeded.
+- Flutter: `3.44.1` (stable channel)
+- Dart: `3.12.1`
+- Framework revision: `924134a44c`
+- Engine hash: `39b1f7043775b9578bbb26a1676e79c4e31c8b5e`
 
 ## Validation results
 
-### Cleanup and restore
+### Restore
 
-- `flutter clean` ?
-- `flutter pub get` ?
-- `dart run build_runner build --delete-conflicting-outputs` ?
+- `flutter pub get` — ✅ `Got dependencies!`
+  - 11 packages have newer versions available, but all are
+    constrained by current `pubspec.yaml` ranges and were resolved
+    successfully.
 
-### Requested validation commands
+### Static analysis
 
-- `flutter analyze` ?
-  - Result: `No issues found!`
+- `flutter analyze` — ✅ `No issues found! (ran in 121.8s)`
 
-- `flutter test` ?
-  - Result: `46 tests passed`
+### Tests
 
-- `flutter build apk --debug` ?
-  - Result: built `build/app/outputs/flutter-apk/app-debug.apk`
+- `flutter test` — ✅ `All tests passed!`
+  - 46 / 46 tests passed across:
+    - `test/core/config/env_config_test.dart`
+    - `test/features/chat/conversation_id_test.dart`
+    - `test/features/connections/connection_domain_test.dart`
+    - `test/features/discovery/discovery_filters_test.dart`
+    - `test/features/discovery/public_profile_test.dart`
+    - `test/features/profile/photo_validation_test.dart`
+    - `test/features/profile/profile_completion_test.dart`
+    - `test/features/profile/profile_logic_test.dart`
+    - `test/features/safety/report_test.dart`
+    - `test/features/verification/verification_request_test.dart`
+    - `test/widget_test.dart` (auth + onboarding + home routing)
+
+### Debug build
+
+- `flutter build apk --debug` — ✅ `√ Built build\app\outputs\flutter-apk\app-debug.apk`
+  - APK size: 161,645,097 bytes (~154 MB)
+  - Gradle task `assembleDebug` completed in 480.3s
 
 ## Notes
 
-The debug APK build completed successfully, but Flutter emitted a warning about a plugin using the Kotlin Gradle Plugin migration path:
+The debug APK build completed successfully, but Flutter emitted a
+**non-blocking** warning about a plugin still using the legacy
+Kotlin Gradle Plugin (KGP) migration path:
 
 - `firebase_storage`
 
-This is not currently blocking the debug build, but it may require a dependency upgrade in the future as Flutter tightens compatibility rules.
+> Future versions of Flutter will fail to build if your app uses
+> plugins that apply KGP. Please check the changelogs of these
+> plugins and upgrade to a version that supports Built-in Kotlin.
+
+This warning was also present in the prior validation run and is
+unchanged by this re-run. It is not currently blocking the debug
+build, but should be addressed in a future dependency-upgrade pass
+before moving to newer Flutter channels.
 
 ## Files changed
 
-Validation-related changes were limited to:
+Validation-related changes are limited to:
 
-- generated project state under `DatingApp/app/mobile` from dependency restore/codegen
-- this investigation document
+- `DatingApp/docs/VALIDATION_INVESTIGATION.md` (this document — was
+  committed at HEAD with placeholder results; this re-run records
+  the actual outcomes of a clean validation pass on the current
+  state).
 
-No new feature work was implemented.
+No source code, generated code, build configuration, rules files,
+or dependency manifests were modified. No new feature work was
+implemented.
