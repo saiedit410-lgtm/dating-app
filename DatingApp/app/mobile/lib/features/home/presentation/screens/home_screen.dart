@@ -91,6 +91,27 @@ class HomeScreen extends ConsumerWidget {
                 label: const Text('Get verified'),
               ),
               const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.pushNamed(AppRoute.likesReceived.routeName),
+                icon: const Icon(Icons.favorite_border),
+                label: const Text('Likes received'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.pushNamed(AppRoute.likesSent.routeName),
+                icon: const Icon(Icons.favorite_outline),
+                label: const Text('Likes sent'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.pushNamed(AppRoute.recentVisitors.routeName),
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text('Recent visitors'),
+              ),
+              const SizedBox(height: 12),
               FilledButton.tonalIcon(
                 onPressed: () => ref.read(authRepositoryProvider).signOut(),
                 icon: const Icon(Icons.logout),

@@ -3,6 +3,7 @@ import 'package:dating_app/core/theme/app_colors.dart';
 import 'package:dating_app/features/connections/presentation/widgets/connection_button.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
+import 'package:dating_app/features/likes/presentation/widgets/like_button.dart';
 import 'package:dating_app/features/profile/domain/profile_enums.dart';
 import 'package:dating_app/features/profile/domain/profile_photo.dart';
 import 'package:dating_app/features/safety/presentation/widgets/profile_safety_menu.dart';
@@ -65,7 +66,14 @@ class _DetailScaffold extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ConnectionButton(otherUid: profile.uid),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              LikeButton(otherUid: profile.uid),
+              const SizedBox(height: 8),
+              ConnectionButton(otherUid: profile.uid),
+            ],
+          ),
         ),
       ),
       body: ListView(

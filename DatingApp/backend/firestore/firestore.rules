@@ -276,6 +276,45 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Phase 2.3 — Likes: `likes/{fromUid}_{toUid}`.
+    // Doc id is the directional pair, so a re-like is idempotent.
+    match /likes/{likeId} {
+      // Either party to the like can read it. This is the minimum
+      // surface area for "Likes Received" + mutual-likes detection.
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUid
+         || request.auth.uid == resource.data.toUid);
+
+      // The liker creates their own like. `fromUid` is locked to the
+      // caller's uid; the recipient and the timestamp are server-stamped.
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.fromUid
+        && request.resource.data.fromUid != request.resource.data.toUid
+        && likeId == request.resource.data.fromUid + '_' + request.resource.data.toUid;
+
+      // Only the original liker can remove their like.
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.fromUid;
+
+      // Likes are immutable once created.
+      allow update: if false;
+    }
+
+    // Phase 2.3 — Profile Visitors: `profileVisitors/{viewerUid}_{profileUid}`.
+    // Latest-write-wins on the same pair (set with merge: true).
+    match /profileVisitors/{visitId} {
+      // Only the profile owner can read who viewed them.
+      allow read: if isSignedIn() && request.auth.uid == resource.data.profileUid;
+
+      // The viewer records their own visit. `viewerUid` is locked to the
+      // caller's uid; the profile uid and the timestamp are server-set.
+      allow create, update: if isSignedIn()
+        && request.auth.uid == request.resource.data.viewerUid
+        && request.resource.data.viewerUid != request.resource.data.profileUid
+        && visitId == request.resource.data.viewerUid + '_' + request.resource.data.profileUid;
+
+      allow delete: if false;
+    }
+
     // Secure-by-default: deny everything not explicitly allowed above.
     match /{document=**} {
       allow read, write: if false;

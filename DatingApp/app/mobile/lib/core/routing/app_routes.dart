@@ -15,7 +15,10 @@ enum AppRoute {
   connections('/connections', 'connections'),
   chats('/chats', 'chats'),
   chat('/chat/:uid', 'chat'),
-  verification('/verification', 'verification');
+  verification('/verification', 'verification'),
+  likesSent('/likes/sent', 'likesSent'),
+  likesReceived('/likes/received', 'likesReceived'),
+  recentVisitors('/visitors', 'recentVisitors');
 
   const AppRoute(this.path, this.routeName);
 

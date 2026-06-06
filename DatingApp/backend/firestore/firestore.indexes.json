@@ -50,6 +50,30 @@
         { "fieldPath": "onboardingComplete", "order": "ASCENDING" },
         { "fieldPath": "accountStatus", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "likes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fromUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "likes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "toUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "profileVisitors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "profileUid", "order": "ASCENDING" },
+        { "fieldPath": "viewedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

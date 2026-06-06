@@ -11,6 +11,9 @@ import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/discovery/presentation/screens/discovery_screen.dart';
 import 'package:dating_app/features/discovery/presentation/screens/profile_detail_screen.dart';
 import 'package:dating_app/features/home/presentation/screens/home_screen.dart';
+import 'package:dating_app/features/likes/presentation/screens/likes_received_screen.dart';
+import 'package:dating_app/features/likes/presentation/screens/likes_sent_screen.dart';
+import 'package:dating_app/features/likes/presentation/screens/recent_visitors_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/onboarding_screen.dart';
 import 'package:dating_app/features/profile/presentation/screens/photo_manager_screen.dart';
 import 'package:dating_app/features/verification/presentation/screens/verification_screen.dart';
@@ -143,6 +146,24 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.verification.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const VerificationScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.likesSent.path,
+        name: AppRoute.likesSent.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const LikesSentScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.likesReceived.path,
+        name: AppRoute.likesReceived.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const LikesReceivedScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.recentVisitors.path,
+        name: AppRoute.recentVisitors.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RecentVisitorsScreen(),
       ),
     ],
   );
