@@ -2,17 +2,22 @@ import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/features/discovery/application/discovery_controller.dart';
 import 'package:dating_app/features/discovery/application/discovery_filters_controller.dart';
 import 'package:dating_app/features/discovery/domain/discovery_filters.dart';
-import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/discovery/presentation/widgets/discovery_filter_sheet.dart';
-import 'package:dating_app/features/discovery/presentation/widgets/profile_card.dart';
+import 'package:dating_app/features/matching/domain/feed_status.dart';
+import 'package:dating_app/features/matching/domain/match_weights.dart';
+import 'package:dating_app/features/matching/domain/ranked_feed_state.dart';
+import 'package:dating_app/features/matching/domain/scored_profile.dart';
+import 'package:dating_app/features/matching/presentation/screens/discovery_preferences_sheet.dart';
+import 'package:dating_app/features/matching/presentation/widgets/score_breakdown_sheet.dart';
+import 'package:dating_app/features/matching/presentation/widgets/scored_profile_card.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The "All Discovery" tab body — paginated, filterable list of public
-/// profiles. Lifted out of [DiscoveryScreen] so the screen can host the
-/// All / Nearby tab switcher.
+/// The "All Discovery" tab body — paginated, filterable, **scored**
+/// list of public profiles. Phase 2.2: single feed controller,
+/// `RankedFeedState<ScoredProfile>`, shared `FeedStatus`.
 class AllDiscoveryBody extends ConsumerStatefulWidget {
   const AllDiscoveryBody({super.key});
 
@@ -41,7 +46,8 @@ class _AllDiscoveryBodyState extends ConsumerState<AllDiscoveryBody> {
   }
 
   void _onScroll() {
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
+    if (_scroll.position.pixels >=
+        _scroll.position.maxScrollExtent - 400) {
       ref.read(discoveryControllerProvider.notifier).loadMore();
     }
   }
@@ -61,9 +67,15 @@ class _AllDiscoveryBodyState extends ConsumerState<AllDiscoveryBody> {
     await ref.read(discoveryControllerProvider.notifier).refresh();
   }
 
+  Future<void> _openPreferences() async {
+    await DiscoveryPreferencesSheet.show(context);
+    await ref.read(discoveryControllerProvider.notifier).refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final DiscoveryState state = ref.watch(discoveryControllerProvider);
+    final RankedFeedState<ScoredProfile> state =
+        ref.watch(discoveryControllerProvider);
     final bool filtersActive =
         !ref.watch(discoveryFiltersControllerProvider).isDefault;
 
@@ -73,6 +85,11 @@ class _AllDiscoveryBodyState extends ConsumerState<AllDiscoveryBody> {
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
           child: Row(
             children: <Widget>[
+              TextButton.icon(
+                onPressed: _openPreferences,
+                icon: const Icon(Icons.tune),
+                label: const Text('Preferences'),
+              ),
               const Spacer(),
               TextButton.icon(
                 onPressed: _openFilters,
@@ -98,11 +115,11 @@ class _AllDiscoveryBodyState extends ConsumerState<AllDiscoveryBody> {
     );
   }
 
-  Widget _body(DiscoveryState state) {
+  Widget _body(RankedFeedState<ScoredProfile> state) {
     if (state.isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.status == DiscoveryStatus.error && state.profiles.isEmpty) {
+    if (state.status == FeedStatus.error && state.items.isEmpty) {
       return _Message(
         icon: Icons.error_outline,
         title: 'Something went wrong',
@@ -112,35 +129,42 @@ class _AllDiscoveryBodyState extends ConsumerState<AllDiscoveryBody> {
             ref.read(discoveryControllerProvider.notifier).refresh(),
       );
     }
-    if (state.profiles.isEmpty) {
+    if (state.items.isEmpty) {
       return _Message(
         icon: Icons.search_off,
         title: 'No one here yet',
-        subtitle: 'Try widening your filters or check back soon.',
-        actionLabel: 'Adjust filters',
-        onAction: _openFilters,
+        subtitle: 'Try widening your preferences or check back soon.',
+        actionLabel: 'Adjust preferences',
+        onAction: _openPreferences,
       );
     }
 
     return ListView.builder(
       controller: _scroll,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: state.profiles.length + (state.hasMore ? 1 : 0),
+      itemCount: state.items.length + (state.hasMore ? 1 : 0),
       itemBuilder: (BuildContext context, int index) {
-        if (index >= state.profiles.length) {
+        if (index >= state.items.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           );
         }
-        final PublicProfile profile = state.profiles[index];
-        return ProfileCard(
-          profile: profile,
+        final ScoredProfile scored = state.items[index];
+        return ScoredProfileCard(
+          scored: scored,
           onTap: () => context.pushNamed(
             AppRoute.profileDetail.routeName,
-            pathParameters: <String, String>{'uid': profile.uid},
-            extra: profile,
+            pathParameters: <String, String>{'uid': scored.profile.uid},
+            extra: scored.profile,
           ),
+          onShowBreakdown: scored.terms.isEmpty
+              ? null
+              : () => ScoreBreakdownSheet.show(
+                  context,
+                  scored: scored,
+                  weights: MatchWeights.forAll,
+                ),
         );
       },
     );

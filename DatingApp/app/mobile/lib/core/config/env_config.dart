@@ -13,6 +13,7 @@ class EnvConfig {
     required this.appName,
     required this.enableVerboseLogging,
     required this.useFirebaseEmulators,
+    required this.matchingEngineEnabled,
     this.authEmulatorPort = 9099,
     this.firestoreEmulatorPort = 8080,
     this.storageEmulatorPort = 9199,
@@ -27,6 +28,14 @@ class EnvConfig {
   /// `--dart-define=USE_FIREBASE_EMULATORS=false`. Always false in production.
   final bool useFirebaseEmulators;
 
+  /// Phase 2.2 feature flag — enables the matching engine (scored feed).
+  /// Off by default. Flip via
+  /// `--dart-define=MATCHING_ENGINE_ENABLED=true` to A/B test the ranked
+  /// feed against the legacy distance/age order. When false, the
+  /// legacy `DiscoveryController`/`NearbyController` paths are used
+  /// unchanged.
+  final bool matchingEngineEnabled;
+
   /// Emulator ports — must match `firebase.json` in the repo root.
   final int authEmulatorPort;
   final int firestoreEmulatorPort;
@@ -35,10 +44,16 @@ class EnvConfig {
   /// Resolves configuration from the build environment.
   ///
   /// `--dart-define=APP_ENV=dev|staging|prod` (defaults to `dev`).
+  /// `--dart-define=MATCHING_ENGINE_ENABLED=true|false` (defaults to
+  /// `true` in dev/staging, `false` in prod).
   static EnvConfig resolve() {
     const raw = String.fromEnvironment('APP_ENV', defaultValue: 'dev');
     const emulatorsFlag = bool.fromEnvironment(
       'USE_FIREBASE_EMULATORS',
+      defaultValue: true,
+    );
+    const matchingFlag = bool.fromEnvironment(
+      'MATCHING_ENGINE_ENABLED',
       defaultValue: true,
     );
     final environment = AppEnvironment.fromName(raw);
@@ -52,6 +67,9 @@ class EnvConfig {
       enableVerboseLogging: !environment.isProduction,
       // Emulators are never used in production, regardless of the flag.
       useFirebaseEmulators: emulatorsFlag && !environment.isProduction,
+      // Matching engine defaults on in dev/staging for fast iteration;
+      // defaults off in prod so the first release uses the legacy order.
+      matchingEngineEnabled: matchingFlag && !environment.isProduction,
     );
   }
 }

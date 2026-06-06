@@ -8,18 +8,31 @@ part of 'discovery_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Loads discoverable profiles with cursor-based pagination, applying
-/// self-exclusion, the block list, and client-side filters per page.
+/// The single Discovery feed controller for the "All" tab.
+///
+/// Phase 2.2: replaces the legacy pagination-only controller with
+/// a scored variant. When the [matchingEngineEnabled] feature flag
+/// is off, scoring is skipped and the controller degenerates to the
+/// legacy age-ordered feed (same behavior as Phase 2.0/2.1).
 
 @ProviderFor(DiscoveryController)
 final discoveryControllerProvider = DiscoveryControllerProvider._();
 
-/// Loads discoverable profiles with cursor-based pagination, applying
-/// self-exclusion, the block list, and client-side filters per page.
+/// The single Discovery feed controller for the "All" tab.
+///
+/// Phase 2.2: replaces the legacy pagination-only controller with
+/// a scored variant. When the [matchingEngineEnabled] feature flag
+/// is off, scoring is skipped and the controller degenerates to the
+/// legacy age-ordered feed (same behavior as Phase 2.0/2.1).
 final class DiscoveryControllerProvider
-    extends $NotifierProvider<DiscoveryController, DiscoveryState> {
-  /// Loads discoverable profiles with cursor-based pagination, applying
-  /// self-exclusion, the block list, and client-side filters per page.
+    extends
+        $NotifierProvider<DiscoveryController, RankedFeedState<ScoredProfile>> {
+  /// The single Discovery feed controller for the "All" tab.
+  ///
+  /// Phase 2.2: replaces the legacy pagination-only controller with
+  /// a scored variant. When the [matchingEngineEnabled] feature flag
+  /// is off, scoring is skipped and the controller degenerates to the
+  /// legacy age-ordered feed (same behavior as Phase 2.0/2.1).
   DiscoveryControllerProvider._()
     : super(
         from: null,
@@ -39,31 +52,46 @@ final class DiscoveryControllerProvider
   DiscoveryController create() => DiscoveryController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(DiscoveryState value) {
+  Override overrideWithValue(RankedFeedState<ScoredProfile> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<DiscoveryState>(value),
+      providerOverride: $SyncValueProvider<RankedFeedState<ScoredProfile>>(
+        value,
+      ),
     );
   }
 }
 
 String _$discoveryControllerHash() =>
-    r'314523bd5dbb6d085bcfc35b7fbe03beb6df8af6';
+    r'abd238282b7be8b2ef50038bf8462b5a9025126c';
 
-/// Loads discoverable profiles with cursor-based pagination, applying
-/// self-exclusion, the block list, and client-side filters per page.
+/// The single Discovery feed controller for the "All" tab.
+///
+/// Phase 2.2: replaces the legacy pagination-only controller with
+/// a scored variant. When the [matchingEngineEnabled] feature flag
+/// is off, scoring is skipped and the controller degenerates to the
+/// legacy age-ordered feed (same behavior as Phase 2.0/2.1).
 
-abstract class _$DiscoveryController extends $Notifier<DiscoveryState> {
-  DiscoveryState build();
+abstract class _$DiscoveryController
+    extends $Notifier<RankedFeedState<ScoredProfile>> {
+  RankedFeedState<ScoredProfile> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<DiscoveryState, DiscoveryState>;
+    final ref =
+        this.ref
+            as $Ref<
+              RankedFeedState<ScoredProfile>,
+              RankedFeedState<ScoredProfile>
+            >;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<DiscoveryState, DiscoveryState>,
-              DiscoveryState,
+              AnyNotifier<
+                RankedFeedState<ScoredProfile>,
+                RankedFeedState<ScoredProfile>
+              >,
+              RankedFeedState<ScoredProfile>,
               Object?,
               Object?
             >;

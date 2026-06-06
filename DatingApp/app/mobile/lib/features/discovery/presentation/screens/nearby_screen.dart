@@ -2,17 +2,21 @@ import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/features/discovery/application/location_controller.dart';
 import 'package:dating_app/features/discovery/application/nearby_controller.dart';
 import 'package:dating_app/features/discovery/domain/location_permission_state.dart';
-import 'package:dating_app/features/discovery/domain/nearby_profile.dart';
 import 'package:dating_app/features/discovery/domain/nearby_radius.dart';
-import 'package:dating_app/features/discovery/presentation/widgets/nearby_profile_card.dart';
+import 'package:dating_app/features/matching/domain/feed_status.dart';
+import 'package:dating_app/features/matching/domain/match_weights.dart';
+import 'package:dating_app/features/matching/domain/ranked_feed_state.dart';
+import 'package:dating_app/features/matching/domain/scored_profile.dart';
+import 'package:dating_app/features/matching/presentation/widgets/score_breakdown_sheet.dart';
+import 'package:dating_app/features/matching/presentation/widgets/scored_profile_card.dart';
 import 'package:dating_app/shared/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' show Geolocator;
 import 'package:go_router/go_router.dart';
 
-/// The "Nearby" discovery feed. Owns the permission prompt UI and renders
-/// the radius-scoped, distance-sorted list.
+/// The "Nearby" discovery feed. Owns the permission prompt UI and
+/// renders the radius-scoped, scored list.
 class NearbyScreen extends ConsumerStatefulWidget {
   const NearbyScreen({super.key});
 
@@ -62,10 +66,10 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
   @override
   Widget build(BuildContext context) {
     final LocationState loc = ref.watch(locationControllerProvider);
-    final NearbyState nearby = ref.watch(nearbyControllerProvider);
+    final RankedFeedState<ScoredProfile> nearby =
+        ref.watch(nearbyControllerProvider);
+    final NearbyRadius radius = ref.watch(nearbyRadiusControllerProvider);
 
-    // If the user has just granted permission and we already have a fix,
-    // the location controller will be `ready` with `location != null`.
     if (loc.status != LocationStatus.ready || loc.location == null) {
       return _LocationPrompt(state: loc);
     }
@@ -75,22 +79,22 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
       child: Column(
         children: <Widget>[
           _RadiusSelector(
-            current: nearby.radius,
+            current: radius,
             onChanged: (NearbyRadius r) =>
                 ref.read(nearbyControllerProvider.notifier).setRadius(r),
           ),
           const Divider(height: 1),
-          Expanded(child: _body(nearby)),
+          Expanded(child: _body(nearby, radius)),
         ],
       ),
     );
   }
 
-  Widget _body(NearbyState state) {
+  Widget _body(RankedFeedState<ScoredProfile> state, NearbyRadius radius) {
     if (state.isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.status == NearbyStatus.error && state.profiles.isEmpty) {
+    if (state.status == FeedStatus.error && state.items.isEmpty) {
       return _Message(
         icon: Icons.error_outline,
         title: 'Something went wrong',
@@ -100,12 +104,12 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
             ref.read(nearbyControllerProvider.notifier).refresh(),
       );
     }
-    if (state.profiles.isEmpty) {
+    if (state.items.isEmpty) {
       return _Message(
         icon: Icons.travel_explore_outlined,
         title: 'No one nearby (yet)',
         subtitle:
-            'We didn\'t find anyone within ${state.radius.label}. Try a larger radius or check back soon.',
+            "We didn't find anyone within ${radius.label}. Try a larger radius or check back soon.",
         actionLabel: 'Refresh',
         onAction: () => ref.read(nearbyControllerProvider.notifier).refresh(),
       );
@@ -114,22 +118,29 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
     return ListView.builder(
       controller: _scroll,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: state.profiles.length + (state.hasMore ? 1 : 0),
+      itemCount: state.items.length + (state.hasMore ? 1 : 0),
       itemBuilder: (BuildContext context, int index) {
-        if (index >= state.profiles.length) {
+        if (index >= state.items.length) {
           return const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           );
         }
-        final NearbyProfile p = state.profiles[index];
-        return NearbyProfileCard(
-          nearby: p,
+        final ScoredProfile scored = state.items[index];
+        return ScoredProfileCard(
+          scored: scored,
           onTap: () => context.pushNamed(
             AppRoute.profileDetail.routeName,
-            pathParameters: <String, String>{'uid': p.profile.uid},
-            extra: p.profile,
+            pathParameters: <String, String>{'uid': scored.profile.uid},
+            extra: scored.profile,
           ),
+          onShowBreakdown: scored.terms.isEmpty
+              ? null
+              : () => ScoreBreakdownSheet.show(
+                  context,
+                  scored: scored,
+                  weights: MatchWeights.forNearby,
+                ),
         );
       },
     );
@@ -166,8 +177,7 @@ class _RadiusSelector extends StatelessWidget {
   }
 }
 
-/// Rendered when we don't yet have a usable location: explains what's
-/// needed, offers actions for each permission state.
+/// Rendered when we don't yet have a usable location.
 class _LocationPrompt extends ConsumerWidget {
   const _LocationPrompt({required this.state});
 
@@ -196,7 +206,7 @@ class _LocationPrompt extends ConsumerWidget {
       icon = Icons.location_off_outlined;
       title = 'Turn on location';
       subtitle =
-          'Your device\'s location service is off. Turn it on to see people nearby.';
+          "Your device's location service is off. Turn it on to see people nearby.";
       actionLabel = 'Open settings';
       action = Geolocator.openLocationSettings;
     } else {

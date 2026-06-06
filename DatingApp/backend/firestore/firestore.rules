@@ -5,7 +5,14 @@ rules_version = '2';
 // `users/{uid}` holds the PUBLIC profile (readable by any signed-in user, for
 // discovery + profile detail). Sensitive data lives in `users/{uid}/private/*`
 // and is owner-only. Identity/trust fields (uid, accountStatus, isVerified)
-// cannot be changed by the client. Everything else is closed by default.
+// and server-managed fields (lastActiveAt, verifiedAt) cannot be changed
+// by the client. Everything else is closed by default.
+//
+// Phase 2.2 additions:
+//   * Discovery preferences live on users/{uid}/private/matchPrefs (owner
+//     only, key-whitelisted) — see the private/matchPrefs sub-match.
+//   * `lastActiveAt` and `verifiedAt` are SERVER-MANAGED: any client write
+//     that touches them is rejected at the rule boundary.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -40,27 +47,42 @@ service cloud.firestore {
         && request.resource.data.isVerified == false;
 
       // Profile/onboarding/photo updates: owner may edit profile fields, but
-      // identity + trust/status fields are immutable from the client, and
-      // exact coordinates (exactLat/exactLng) may NEVER live on the public
-      // doc — they belong on users/{uid}/private/data (see below). Admins
+      // identity + trust/status + server-managed fields are immutable from
+      // the client. Exact coordinates (exactLat/exactLng) may NEVER live on
+      // the public doc — they belong on users/{uid}/private/data. Admins
       // (e.g. verification approval) may change trust/status fields.
+      //
+      // SERVER-MANAGED FIELDS (Phase 2.2 hardening — the affectedKeys()
+      // check ensures a tampered client cannot write them):
+      //   - lastActiveAt  (set by Cloud Function on user action)
+      //   - verifiedAt    (set by Cloud Function on approval)
+      //   - isVerified    (admin-only via separate match clause)
+      //   - accountStatus (admin-only via separate match clause)
       allow update: if (isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.accountStatus == resource.data.accountStatus
         && request.resource.data.isVerified == resource.data.isVerified
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(<String>[
+              'displayName', 'dateOfBirth', 'age', 'gender', 'interestedIn',
+              'datingIntent', 'bio', 'city', 'state', 'country', 'photos',
+              'profilePhotoUrls', 'profileCompletion', 'onboardingComplete',
+              'geohash', 'geohashPrefixes', 'interests', 'updatedAt',
+            ])
         && !('exactLat' in request.resource.data)
-        && !('exactLng' in request.resource.data))
+        && !('exactLng' in request.resource.data)
+        && !('lastActiveAt' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('verifiedAt' in request.resource.data.diff(resource.data).affectedKeys()))
         || isAdmin();
 
       allow delete: if false;
 
-      // Private subdocuments (phone number, exact location, ...).
-      // The owner may write ONLY the whitelisted fields here — anything
-      // else (uid/isVerified/accountStatus/...) is rejected at the
-      // boundary so a tampered client cannot smuggle trust flags into the
-      // private subdoc. Exact lat/lng are written only here, never on the
-      // public profile, so other users can never read raw coordinates.
-      match /private/{document} {
+      // Private subdocuments. Each doc has a per-doc key-whitelist so a
+      // tampered client cannot smuggle trust flags into the private
+      // subdoc. Exact lat/lng are written only here, never on the public
+      // profile, so other users can never read raw coordinates.
+      match /private/data {
+        // Phone, exact location, FCM tokens, device fingerprints.
         allow read: if isOwner(userId) || isAdmin();
 
         allow write: if isOwner(userId)
@@ -73,6 +95,24 @@ service cloud.firestore {
                 'locationUpdatedAt',
                 'fcmTokens',
                 'deviceIds',
+              ]);
+      }
+
+      // Discovery preferences (Phase 2.2). Owner-only; key-whitelisted.
+      match /private/matchPrefs {
+        allow read: if isOwner(userId) || isAdmin();
+
+        allow write: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(<String>[
+                'matchPrefs',
+                'updatedAt',
+              ])
+          && request.resource.data.matchPrefs.diff(
+                resource.data.matchPrefs
+              ).affectedKeys().hasOnly(<String>[
+                'otherAgeMin', 'otherAgeMax', 'requiredGenders',
+                'requireIntentMatch', 'intentMatrixFloor',
               ]);
       }
 

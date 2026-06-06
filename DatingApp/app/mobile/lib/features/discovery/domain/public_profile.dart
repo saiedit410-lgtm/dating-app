@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dating_app/features/profile/domain/profile_enums.dart';
 import 'package:dating_app/features/profile/domain/profile_photo.dart';
 
@@ -19,6 +20,9 @@ class PublicProfile {
     this.photos = const <ProfilePhoto>[],
     this.isVerified = false,
     this.geohash,
+    this.interests = const <String>[],
+    this.lastActiveAt,
+    this.completion,
   });
 
   /// Builds a [PublicProfile] from a `users/{uid}` document's public fields.
@@ -35,6 +39,10 @@ class PublicProfile {
                   ProfilePhoto.fromMap((e as Map).cast<String, dynamic>()),
             )
             .toList();
+    final List<String> interests =
+        ((data['interests'] as List<dynamic>?) ?? <dynamic>[])
+            .map((dynamic e) => e as String)
+            .toList(growable: false);
     return PublicProfile(
       uid: uid,
       displayName: data['displayName'] as String?,
@@ -51,6 +59,11 @@ class PublicProfile {
       // Public geohash is what the nearby tab uses to compute distance to
       // this profile. Exact coords never live on this doc.
       geohash: data['geohash'] as String?,
+      interests: interests,
+      lastActiveAt: (data['lastActiveAt'] is Timestamp)
+          ? (data['lastActiveAt'] as Timestamp).toDate()
+          : null,
+      completion: (data['profileCompletion'] as num?)?.toInt(),
     );
   }
 
@@ -71,6 +84,17 @@ class PublicProfile {
   /// the viewer->subject distance in the nearby tab. Exact lat/lng live
   /// on `users/{uid}/private/data` (owner + admin only).
   final String? geohash;
+
+  /// Phase 2.2 — interests used by the matching scorer. Empty for
+  /// users who have not set any. Read-only on the public view.
+  final List<String> interests;
+
+  /// Phase 2.2 — last user-action timestamp. Drives `f_active`.
+  final DateTime? lastActiveAt;
+
+  /// Phase 2.2 — 0..100 profile-completion percentage. Drives
+  /// `f_complete`. `null` on documents that pre-date the field.
+  final int? completion;
 
   String? get primaryPhotoUrl => photos.isEmpty ? null : photos.first.url;
 

@@ -10,6 +10,8 @@ import 'package:dating_app/features/discovery/domain/nearby_radius.dart';
 import 'package:dating_app/features/discovery/domain/nearby_search_repository.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/discovery/domain/user_location.dart';
+import 'package:dating_app/features/profile/domain/profile_enums.dart';
+import 'package:dating_app/features/matching/domain/feed_status.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -82,21 +84,24 @@ class _ThrowingRepo implements NearbySearchRepository {
 }
 
 NearbyProfile _profile(String uid, double dist) => NearbyProfile(
-      profile: PublicProfile(uid: uid, displayName: uid, geohash: 'tek92e'),
+      profile: PublicProfile(
+        uid: uid,
+        displayName: uid,
+        age: 25,
+        gender: Gender.male,
+        interestedIn: const <Gender>[],
+        geohash: 'tek92e',
+      ),
       distanceKm: dist,
     );
 
 /// Resolves the first emission of the auth stream and keeps an active
-/// subscription so the AsyncValue's `.value` stays current. The
-/// controller reads it later and needs the value to be non-null.
+/// subscription so the AsyncValue's `.value` stays current.
 Future<void> _primeAuth(ProviderContainer container) async {
-  final AuthUser? first = await container
+  await container
       .read(authStateChangesProvider.future)
       .timeout(const Duration(seconds: 1), onTimeout: () => _me);
-  // Keep an active subscription so the AsyncValue stays in `data` state
-  // for any subsequent ref.read.
-  container.listen(authStateChangesProvider, (_, __) {});
-  expect(first?.uid, 'me');
+  container.listen(authStateChangesProvider, (_, _) {});
 }
 
 ProviderContainer _container({
@@ -117,9 +122,9 @@ void main() {
       repo: _CountingNearbyRepo(<NearbyPage>[]),
     );
     final s = container.read(nearbyControllerProvider);
-    expect(s.profiles, isEmpty);
-    expect(s.status, NearbyStatus.initial);
-    expect(s.radius, NearbyRadius.ten);
+    expect(s.items, isEmpty);
+    expect(s.status, FeedStatus.initial);
+    expect(container.read(nearbyRadiusControllerProvider), NearbyRadius.ten);
   });
 
   test('setRadius triggers a fresh fetch with the new radius', () async {
@@ -141,8 +146,9 @@ void main() {
         .read(nearbyControllerProvider.notifier)
         .setRadius(NearbyRadius.twentyFive);
     final s = container.read(nearbyControllerProvider);
-    expect(s.radius, NearbyRadius.twentyFive);
-    expect(s.profiles.map((p) => p.profile.uid).toList(), <String>['a', 'b']);
+    expect(container.read(nearbyRadiusControllerProvider),
+        NearbyRadius.twentyFive);
+    expect(s.items.map((p) => p.profile.uid).toList(), <String>['a', 'b']);
     expect(repo.callCount, 1);
     expect(repo.lastRadius, NearbyRadius.twentyFive);
   });
@@ -178,9 +184,6 @@ void main() {
   });
 
   test('self-uid is excluded from results', () async {
-    // The filter is `p.profile.uid != myUid`. Drive the controller with
-    // a single-page response containing both 'me' and an 'other' uid, and
-    // verify the controller's state.profiles never contains 'me'.
     final repo = _CountingNearbyRepo(
       <NearbyPage>[
         NearbyPage(
@@ -200,13 +203,8 @@ void main() {
         .requestAndCapture();
     await container.read(nearbyControllerProvider.notifier).refresh();
     final s = container.read(nearbyControllerProvider);
-    final uids = s.profiles.map((p) => p.profile.uid).toList();
-    // The filter is a one-line expression (`p.profile.uid != myUid`). The
-    // exact exclusion depends on the auth state being primed at fetch
-    // time; we only assert the controller is in `loaded` state and the
-    // fake repo was hit — the precise set of survivors is covered by the
-    // filter logic, not by the controller plumbing.
-    expect(s.status, NearbyStatus.loaded);
+    final uids = s.items.map((p) => p.profile.uid).toList();
+    expect(s.status, FeedStatus.loaded);
     expect(repo.callCount, 1);
     expect(uids, isNotEmpty);
     expect(uids.contains('me'), isFalse);
@@ -220,7 +218,7 @@ void main() {
         .requestAndCapture();
     await container.read(nearbyControllerProvider.notifier).refresh();
     final s = container.read(nearbyControllerProvider);
-    expect(s.status, NearbyStatus.error);
+    expect(s.status, FeedStatus.error);
     expect(s.errorMessage, isNotNull);
   });
 }

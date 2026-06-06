@@ -1,70 +1,38 @@
+import 'package:dating_app/core/config/env_config.dart';
 import 'package:dating_app/features/auth/application/auth_providers.dart';
 import 'package:dating_app/features/discovery/application/discovery_providers.dart';
 import 'package:dating_app/features/discovery/application/location_controller.dart';
-import 'package:dating_app/features/discovery/domain/nearby_profile.dart';
 import 'package:dating_app/features/discovery/domain/nearby_radius.dart';
+import 'package:dating_app/features/matching/application/matching_providers.dart';
+import 'package:dating_app/features/matching/domain/feed_status.dart';
+import 'package:dating_app/features/matching/domain/match_preferences.dart';
+import 'package:dating_app/features/matching/domain/match_scorer.dart';
+import 'package:dating_app/features/matching/domain/match_weights.dart';
+import 'package:dating_app/features/matching/domain/ranked_feed_state.dart';
+import 'package:dating_app/features/matching/domain/scored_profile.dart';
+import 'package:dating_app/features/safety/application/safety_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'nearby_controller.g.dart';
 
-enum NearbyStatus { initial, loading, loaded, error }
-
-/// Paginated, filterable nearby feed state.
-class NearbyState {
-  const NearbyState({
-    this.profiles = const <NearbyProfile>[],
-    this.status = NearbyStatus.initial,
-    this.hasMore = true,
-    this.cursor,
-    this.errorMessage,
-    this.radius = NearbyRadius.ten,
-  });
-
-  final List<NearbyProfile> profiles;
-  final NearbyStatus status;
-  final bool hasMore;
-  final Object? cursor;
-  final String? errorMessage;
-  final NearbyRadius radius;
-
-  bool get isInitialLoading =>
-      status == NearbyStatus.loading && profiles.isEmpty;
-  bool get isLoadingMore => status == NearbyStatus.loading;
-
-  NearbyState copyWith({
-    List<NearbyProfile>? profiles,
-    NearbyStatus? status,
-    bool? hasMore,
-    Object? cursor,
-    String? errorMessage,
-    NearbyRadius? radius,
-    bool clearError = false,
-  }) {
-    return NearbyState(
-      profiles: profiles ?? this.profiles,
-      status: status ?? this.status,
-      hasMore: hasMore ?? this.hasMore,
-      cursor: cursor ?? this.cursor,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      radius: radius ?? this.radius,
-    );
-  }
-}
-
-/// Loads nearby profiles around the current [LocationController] position.
+/// The single Nearby feed controller.
 ///
-/// Reads the auth uid (to exclude self), the blocked-uid set, and the
-/// current [LocationState.location] for the search origin.
+/// Phase 2.2: replaces both the legacy `NearbyController` and the
+/// `RankedNearbyController` with a single controller that emits
+/// [RankedFeedState] over [ScoredProfile]. When the
+/// [matchingEngineEnabled] feature flag is off, scoring is skipped
+/// and distance is the only sort key (legacy behavior).
 @riverpod
 class NearbyController extends _$NearbyController {
   static const int _pageSize = 20;
 
   @override
-  NearbyState build() => const NearbyState();
+  RankedFeedState<ScoredProfile> build() {
+    return const RankedFeedState<ScoredProfile>();
+  }
 
-  /// First load — no-op if already loaded/loading.
   Future<void> loadInitial() async {
-    if (state.status != NearbyStatus.initial) return;
+    if (state.status != FeedStatus.initial) return;
     await _fetch(reset: true);
   }
 
@@ -72,17 +40,16 @@ class NearbyController extends _$NearbyController {
 
   Future<void> loadMore() async {
     if (!state.hasMore ||
-        state.status == NearbyStatus.loading ||
-        state.profiles.isEmpty) {
+        state.status == FeedStatus.loading ||
+        state.items.isEmpty) {
       return;
     }
     await _fetch(reset: false);
   }
 
-  /// Change the active radius and re-fetch from the top.
   Future<void> setRadius(NearbyRadius radius) async {
-    if (state.radius == radius) return;
-    state = state.copyWith(radius: radius);
+    if (ref.read(nearbyRadiusControllerProvider) == radius) return;
+    ref.read(nearbyRadiusControllerProvider.notifier).set(radius);
     await _fetch(reset: true);
   }
 
@@ -90,15 +57,27 @@ class NearbyController extends _$NearbyController {
     final locState = ref.read(locationControllerProvider);
     final origin = locState.location;
     if (origin == null) {
-      // No position yet — the UI is responsible for prompting the user via
-      // `LocationController`. We just sit in `initial`.
+      // No position yet — the UI is responsible for prompting the
+      // user via `LocationController`. Sit in `initial`.
       return;
     }
 
+    final NearbyRadius radius = ref.read(nearbyRadiusControllerProvider);
+    final ViewerContext viewer = ref.read(viewerContextProvider);
+    final bool matchingOn =
+        ref.read(envConfigProvider).matchingEngineEnabled;
+    final MatchScorer scorer = ref.read(matchScorerProvider);
+    final MatchWeights weights = MatchWeights.forNearby;
     final String? myUid = ref.read(authStateChangesProvider).value?.uid;
+    final Set<String> blocked =
+        ref.read(blockedUidsProvider).value ?? const <String>{};
+    final MatchPreferences viewerPrefs =
+        ref.read(currentMatchPreferencesProvider).value ??
+            MatchPreferences.defaults(null);
+
     state = state.copyWith(
-      status: NearbyStatus.loading,
-      profiles: reset ? <NearbyProfile>[] : null,
+      status: FeedStatus.loading,
+      items: reset ? <ScoredProfile>[] : null,
       hasMore: reset ? true : null,
       cursor: reset ? null : state.cursor,
       clearError: true,
@@ -108,35 +87,76 @@ class NearbyController extends _$NearbyController {
       final page = await ref.read(nearbySearchRepositoryProvider).fetchPage(
             originLat: origin.latitude,
             originLng: origin.longitude,
-            radius: state.radius,
+            radius: radius,
             cursor: reset ? null : state.cursor,
             limit: _pageSize,
           );
-      final List<NearbyProfile> filtered = page.profiles
-          .where((NearbyProfile p) => p.profile.uid != myUid)
-          .toList(growable: false);
-      final List<NearbyProfile> merged = reset
+      final List<ScoredProfile> filtered = <ScoredProfile>[];
+      for (final p in page.profiles) {
+        if (p.profile.uid == myUid) continue;
+        if (blocked.contains(p.profile.uid)) continue;
+        if (!matchingOn) {
+          filtered.add(ScoredProfile(
+            profile: p.profile,
+            score: 0,
+            terms: const <String, double>{},
+            distanceKm: p.distanceKm,
+          ));
+          continue;
+        }
+        final ScoredProfile? scored = scorer.evaluate(
+          viewer: viewer,
+          subject: p.profile,
+          viewerPrefs: viewerPrefs,
+          blockedUids: blocked,
+          weights: weights,
+          subjectDistanceKm: p.distanceKm,
+        );
+        if (scored == null) continue;
+        filtered.add(scored);
+      }
+      if (matchingOn) {
+        filtered.sort((ScoredProfile a, ScoredProfile b) {
+          final int c = b.score.compareTo(a.score);
+          if (c != 0) return c;
+          return a.profile.uid.compareTo(b.profile.uid);
+        });
+      }
+
+      final List<ScoredProfile> merged = reset
           ? filtered
-          : <NearbyProfile>[...state.profiles, ...filtered];
-      state = NearbyState(
-        profiles: _dedupe(merged),
-        status: NearbyStatus.loaded,
+          : <ScoredProfile>[...state.items, ...filtered];
+
+      state = RankedFeedState<ScoredProfile>(
+        items: _dedupe(merged),
+        status: FeedStatus.loaded,
         hasMore: page.hasMore,
         cursor: page.nextCursor,
-        radius: state.radius,
       );
     } catch (_) {
       state = state.copyWith(
-        status: NearbyStatus.error,
+        status: FeedStatus.error,
         errorMessage: 'Could not load nearby people. Please try again.',
       );
     }
   }
 
-  List<NearbyProfile> _dedupe(List<NearbyProfile> profiles) {
+  List<ScoredProfile> _dedupe(List<ScoredProfile> profiles) {
     final Set<String> seen = <String>{};
     return profiles
-        .where((NearbyProfile p) => seen.add(p.profile.uid))
+        .where((ScoredProfile p) => seen.add(p.profile.uid))
         .toList(growable: false);
   }
+}
+
+/// The active radius chip on the nearby tab. Lives outside the
+/// controller so [setRadius] can be a pure read of the next
+/// value, and so the UI can `ref.watch` it without owning it.
+@Riverpod(keepAlive: true)
+class NearbyRadiusController extends _$NearbyRadiusController {
+  @override
+  NearbyRadius build() => NearbyRadius.ten;
+
+  // ignore: use_setters_to_change_properties
+  void set(NearbyRadius value) => state = value;
 }

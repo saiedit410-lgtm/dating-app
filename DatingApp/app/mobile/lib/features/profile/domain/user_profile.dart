@@ -25,6 +25,8 @@ class UserProfile {
     this.verificationStatus,
     this.verifiedAt,
     this.accountStatus = 'active',
+    this.interests = const <String>[],
+    this.lastActiveAt,
   });
 
   final String uid;
@@ -50,6 +52,13 @@ class UserProfile {
   final String? verificationStatus;
   final DateTime? verifiedAt;
   final String accountStatus;
+
+  /// Phase 2.2 — interests (lowercase, deduped, max 12) for the
+  /// matching engine. Empty for users who never set any.
+  final List<String> interests;
+
+  /// Phase 2.2 — last user-action timestamp. Drives `f_active`.
+  final DateTime? lastActiveAt;
 
   /// Age in whole years derived from [dateOfBirth], or null if unset.
   int? get age => dateOfBirth == null ? null : calculateAge(dateOfBirth!);

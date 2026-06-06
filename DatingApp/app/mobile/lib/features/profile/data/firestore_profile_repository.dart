@@ -70,6 +70,10 @@ class FirestoreProfileRepository implements ProfileRepository {
       verificationStatus: data['verificationStatus'] as String?,
       verifiedAt: (data['verifiedAt'] as Timestamp?)?.toDate(),
       accountStatus: data['accountStatus'] as String? ?? 'active',
+      interests: ((data['interests'] as List<dynamic>?) ?? <dynamic>[])
+          .map((dynamic e) => e as String)
+          .toList(growable: false),
+      lastActiveAt: (data['lastActiveAt'] as Timestamp?)?.toDate(),
     );
   }
 

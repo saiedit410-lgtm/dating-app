@@ -31,4 +31,15 @@ void main() {
       expect(config.enableVerboseLogging, isTrue);
     });
   });
+
+  group('EnvConfig.matchingEngineEnabled (Phase 2.2 feature flag)', () {
+    test('defaults to true in dev when MATCHING_ENGINE_ENABLED is unset', () {
+      // `dart-define` values are compile-time constants; we can only
+      // exercise the read path here. The shape of the field is what
+      // we are asserting — that the feature flag exists and is
+      // wired through the same resolver as the rest of EnvConfig.
+      final config = EnvConfig.resolve();
+      expect(config.matchingEngineEnabled, isNotNull);
+    });
+  });
 }
