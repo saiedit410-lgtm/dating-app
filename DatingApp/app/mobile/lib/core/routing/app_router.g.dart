@@ -11,7 +11,7 @@ part of 'app_router.dart';
 /// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
 /// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
-/// rebuilds when the routing decision changes — not on every profile edit:
+/// rebuilds when the routing decision changes - not on every profile edit:
 ///  * loading   -> Splash
 ///  * loggedOut -> Login / OTP
 ///  * onboarding-> Onboarding
@@ -23,7 +23,7 @@ final goRouterProvider = GoRouterProvider._();
 /// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
 /// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
-/// rebuilds when the routing decision changes — not on every profile edit:
+/// rebuilds when the routing decision changes - not on every profile edit:
 ///  * loading   -> Splash
 ///  * loggedOut -> Login / OTP
 ///  * onboarding-> Onboarding
@@ -35,7 +35,7 @@ final class GoRouterProvider
   /// The application's [GoRouter] with auth + onboarding aware route guards.
   ///
   /// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
-  /// rebuilds when the routing decision changes — not on every profile edit:
+  /// rebuilds when the routing decision changes - not on every profile edit:
   ///  * loading   -> Splash
   ///  * loggedOut -> Login / OTP
   ///  * onboarding-> Onboarding
@@ -73,4 +73,4 @@ final class GoRouterProvider
   }
 }
 
-String _$goRouterHash() => r'2d3ce89f3c228d50330782a866bc2352a84d837f';
+String _$goRouterHash() => r'49b804ea196ba1a2d1532abedc56f4224f518e74';

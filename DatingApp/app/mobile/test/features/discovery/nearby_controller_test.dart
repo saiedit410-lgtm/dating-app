@@ -10,8 +10,8 @@ import 'package:dating_app/features/discovery/domain/nearby_radius.dart';
 import 'package:dating_app/features/discovery/domain/nearby_search_repository.dart';
 import 'package:dating_app/features/discovery/domain/public_profile.dart';
 import 'package:dating_app/features/discovery/domain/user_location.dart';
-import 'package:dating_app/features/profile/domain/profile_enums.dart';
 import 'package:dating_app/features/matching/domain/feed_status.dart';
+import 'package:dating_app/features/profile/domain/profile_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,10 +33,10 @@ class _FakeLocationRepository implements LocationRepository {
 
   @override
   Future<UserLocation> getCurrentLocation() async => UserLocation.fromLatLng(
-        latitude: 18.52,
-        longitude: 73.85,
-        updatedAt: DateTime(2026, 6, 6),
-      );
+    latitude: 18.52,
+    longitude: 73.85,
+    updatedAt: DateTime(2026, 6, 6),
+  );
 
   @override
   Future<void> saveLocation(String uid, UserLocation location) async {}
@@ -84,16 +84,16 @@ class _ThrowingRepo implements NearbySearchRepository {
 }
 
 NearbyProfile _profile(String uid, double dist) => NearbyProfile(
-      profile: PublicProfile(
-        uid: uid,
-        displayName: uid,
-        age: 25,
-        gender: Gender.male,
-        interestedIn: const <Gender>[],
-        geohash: 'tek92e',
-      ),
-      distanceKm: dist,
-    );
+  profile: PublicProfile(
+    uid: uid,
+    displayName: uid,
+    age: 25,
+    gender: Gender.male,
+    interestedIn: const <Gender>[],
+    geohash: 'tek92e',
+  ),
+  distanceKm: dist,
+);
 
 /// Resolves the first emission of the auth stream and keeps an active
 /// subscription so the AsyncValue's `.value` stays current.
@@ -104,9 +104,7 @@ Future<void> _primeAuth(ProviderContainer container) async {
   container.listen(authStateChangesProvider, (_, _) {});
 }
 
-ProviderContainer _container({
-  required NearbySearchRepository repo,
-}) {
+ProviderContainer _container({required NearbySearchRepository repo}) {
   return ProviderContainer(
     overrides: [
       authStateChangesProvider.overrideWith(_meStream),
@@ -118,9 +116,7 @@ ProviderContainer _container({
 
 void main() {
   test('initial state is empty and radius defaults to 10 km', () {
-    final container = _container(
-      repo: _CountingNearbyRepo(<NearbyPage>[]),
-    );
+    final container = _container(repo: _CountingNearbyRepo(<NearbyPage>[]));
     final s = container.read(nearbyControllerProvider);
     expect(s.items, isEmpty);
     expect(s.status, FeedStatus.initial);
@@ -128,15 +124,13 @@ void main() {
   });
 
   test('setRadius triggers a fresh fetch with the new radius', () async {
-    final repo = _CountingNearbyRepo(
-      <NearbyPage>[
-        NearbyPage(
-          profiles: <NearbyProfile>[_profile('a', 1.0), _profile('b', 5.0)],
-          nextCursor: null,
-          hasMore: false,
-        ),
-      ],
-    );
+    final repo = _CountingNearbyRepo(<NearbyPage>[
+      NearbyPage(
+        profiles: <NearbyProfile>[_profile('a', 1.0), _profile('b', 5.0)],
+        nextCursor: null,
+        hasMore: false,
+      ),
+    ]);
     final container = _container(repo: repo);
     await _primeAuth(container);
     await container
@@ -146,28 +140,28 @@ void main() {
         .read(nearbyControllerProvider.notifier)
         .setRadius(NearbyRadius.twentyFive);
     final s = container.read(nearbyControllerProvider);
-    expect(container.read(nearbyRadiusControllerProvider),
-        NearbyRadius.twentyFive);
+    expect(
+      container.read(nearbyRadiusControllerProvider),
+      NearbyRadius.twentyFive,
+    );
     expect(s.items.map((p) => p.profile.uid).toList(), <String>['a', 'b']);
     expect(repo.callCount, 1);
     expect(repo.lastRadius, NearbyRadius.twentyFive);
   });
 
   test('changing radius twice re-fetches both times', () async {
-    final repo = _CountingNearbyRepo(
-      <NearbyPage>[
-        const NearbyPage(
-          profiles: <NearbyProfile>[],
-          nextCursor: null,
-          hasMore: false,
-        ),
-        const NearbyPage(
-          profiles: <NearbyProfile>[],
-          nextCursor: null,
-          hasMore: false,
-        ),
-      ],
-    );
+    final repo = _CountingNearbyRepo(<NearbyPage>[
+      const NearbyPage(
+        profiles: <NearbyProfile>[],
+        nextCursor: null,
+        hasMore: false,
+      ),
+      const NearbyPage(
+        profiles: <NearbyProfile>[],
+        nextCursor: null,
+        hasMore: false,
+      ),
+    ]);
     final container = _container(repo: repo);
     await _primeAuth(container);
     await container
@@ -184,18 +178,13 @@ void main() {
   });
 
   test('self-uid is excluded from results', () async {
-    final repo = _CountingNearbyRepo(
-      <NearbyPage>[
-        NearbyPage(
-          profiles: <NearbyProfile>[
-            _profile('me', 0.0),
-            _profile('other', 3.0),
-          ],
-          nextCursor: null,
-          hasMore: false,
-        ),
-      ],
-    );
+    final repo = _CountingNearbyRepo(<NearbyPage>[
+      NearbyPage(
+        profiles: <NearbyProfile>[_profile('me', 0.0), _profile('other', 3.0)],
+        nextCursor: null,
+        hasMore: false,
+      ),
+    ]);
     final container = _container(repo: repo);
     await _primeAuth(container);
     await container

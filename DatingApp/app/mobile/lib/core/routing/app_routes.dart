@@ -18,7 +18,14 @@ enum AppRoute {
   verification('/verification', 'verification'),
   likesSent('/likes/sent', 'likesSent'),
   likesReceived('/likes/received', 'likesReceived'),
-  recentVisitors('/visitors', 'recentVisitors');
+  recentVisitors('/visitors', 'recentVisitors'),
+  admin('/admin', 'admin'),
+  adminVerifications('/admin/verifications', 'adminVerifications'),
+  adminVerificationDetail('/admin/verifications/:uid', 'adminVerificationDetail'),
+  adminReports('/admin/reports', 'adminReports'),
+  adminReportDetail('/admin/reports/:reportId', 'adminReportDetail'),
+  adminUserDetail('/admin/users/:uid', 'adminUserDetail'),
+  adminAudit('/admin/audit', 'adminAudit');
 
   const AppRoute(this.path, this.routeName);
 

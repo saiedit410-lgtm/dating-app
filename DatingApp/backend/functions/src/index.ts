@@ -8,6 +8,10 @@
  *
  * Recipient device tokens live in `users/{uid}/deviceTokens/{token}` (doc id ==
  * token). Invalid tokens are pruned after a failed send.
+ *
+ * Phase 2.4 also exports the admin callables (privileged mutations on
+ * verificationRequests / reports / users). The admin seams live in
+ * `admin/helpers.ts`; the function bundle is one.
  */
 import {initializeApp} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
@@ -123,3 +127,13 @@ export const onMessageCreated = onDocumentCreated(
     );
   },
 );
+
+// Phase 2.4 — admin callables (privileged mutations, all gated on the
+// `admin: true` custom claim). Re-exported so the function bundle is one.
+export {
+  approveVerification,
+  rejectVerification,
+  resolveReport,
+  setUserStatus,
+} from "./admin/helpers";
+

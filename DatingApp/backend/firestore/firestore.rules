@@ -252,13 +252,13 @@ service cloud.firestore {
     }
 
     // Reports: `reports/{reportId}`. Users may create reports about others;
-    // they cannot read, modify, or delete any report (moderation is done by
-    // admins via the Admin SDK / a future dashboard).
+    // mutations are function-only. Admins may read the queue to triage.
     match /reports/{reportId} {
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.reporterUid
         && request.resource.data.reporterUid != request.resource.data.reportedUid;
-      allow read, update, delete: if false;
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
 
     // Verification requests: `verificationRequests/{uid}` (doc id == uid).
@@ -313,6 +313,13 @@ service cloud.firestore {
         && visitId == request.resource.data.viewerUid + '_' + request.resource.data.profileUid;
 
       allow delete: if false;
+    }
+
+    // Phase 2.4 — Admin audit log: `adminActions/{auto}` (doc id auto).
+    // The Cloud Function is the only writer; clients can only read.
+    match /adminActions/{actionId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Secure-by-default: deny everything not explicitly allowed above.

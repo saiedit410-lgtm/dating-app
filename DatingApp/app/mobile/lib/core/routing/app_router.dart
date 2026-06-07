@@ -1,5 +1,13 @@
 import 'package:dating_app/core/routing/app_routes.dart';
 import 'package:dating_app/core/routing/app_startup.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_audit_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_report_detail_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_reports_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_user_detail_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_verification_detail_screen.dart';
+import 'package:dating_app/features/admin/presentation/screens/admin_verifications_screen.dart';
+import 'package:dating_app/features/auth/application/auth_providers.dart';
 import 'package:dating_app/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/phone_login_screen.dart';
 import 'package:dating_app/features/auth/presentation/screens/splash_screen.dart';
@@ -26,7 +34,7 @@ part 'app_router.g.dart';
 /// The application's [GoRouter] with auth + onboarding aware route guards.
 ///
 /// Reacts to [appStartupStageProvider] (a coarse enum), so the router only
-/// rebuilds when the routing decision changes — not on every profile edit:
+/// rebuilds when the routing decision changes - not on every profile edit:
 ///  * loading   -> Splash
 ///  * loggedOut -> Login / OTP
 ///  * onboarding-> Onboarding
@@ -34,6 +42,7 @@ part 'app_router.g.dart';
 @Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
   final AppStartupStage stage = ref.watch(appStartupStageProvider);
+  final bool isAdmin = ref.watch(isCurrentUserAdminProvider).value ?? false;
 
   return GoRouter(
     initialLocation: AppRoute.splash.path,
@@ -53,13 +62,15 @@ GoRouter goRouter(Ref ref) {
               ? null
               : AppRoute.onboarding.path;
         case AppStartupStage.ready:
-          // Keep users out of the pre-auth / onboarding screens; allow any
-          // other authenticated route (home, photos, ...).
           final bool isPreAuthLoc =
               loc == AppRoute.splash.path ||
               loc == AppRoute.login.path ||
               loc == AppRoute.otp.path ||
               loc == AppRoute.onboarding.path;
+          final bool isAdminLoc = loc.startsWith('/admin');
+          if (isAdminLoc && !isAdmin) {
+            return AppRoute.home.path;
+          }
           return isPreAuthLoc ? AppRoute.home.path : null;
       }
     },
@@ -164,6 +175,52 @@ GoRouter goRouter(Ref ref) {
         name: AppRoute.recentVisitors.routeName,
         builder: (BuildContext context, GoRouterState state) =>
             const RecentVisitorsScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.admin.path,
+        name: AppRoute.admin.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.adminVerifications.path,
+        name: AppRoute.adminVerifications.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AdminVerificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.adminVerificationDetail.path,
+        name: AppRoute.adminVerificationDetail.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AdminVerificationDetailScreen(
+              uid: state.pathParameters['uid'] ?? '',
+            ),
+      ),
+      GoRoute(
+        path: AppRoute.adminReports.path,
+        name: AppRoute.adminReports.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AdminReportsScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.adminReportDetail.path,
+        name: AppRoute.adminReportDetail.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AdminReportDetailScreen(
+              reportId: state.pathParameters['reportId'] ?? '',
+            ),
+      ),
+      GoRoute(
+        path: AppRoute.adminUserDetail.path,
+        name: AppRoute.adminUserDetail.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            AdminUserDetailScreen(uid: state.pathParameters['uid'] ?? ''),
+      ),
+      GoRoute(
+        path: AppRoute.adminAudit.path,
+        name: AppRoute.adminAudit.routeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AdminAuditScreen(),
       ),
     ],
   );

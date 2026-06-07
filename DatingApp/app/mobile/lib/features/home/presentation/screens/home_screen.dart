@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 /// Authenticated landing screen.
 ///
-/// Temporary home for the authenticated session — replaced by the discovery
+/// Temporary home for the authenticated session - replaced by the discovery
 /// experience in a later milestone. Confirms the signed-in identity and offers
 /// logout so the full auth lifecycle is exercisable end to end.
 class HomeScreen extends ConsumerWidget {
@@ -16,6 +16,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateChangesProvider).value;
+    final isAdmin = ref.watch(isCurrentUserAdminProvider).value ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -40,10 +41,7 @@ class HomeScreen extends ConsumerWidget {
                 color: context.colorScheme.primary,
               ),
               const SizedBox(height: 16),
-              Text(
-                "You're signed in",
-                style: context.textTheme.headlineSmall,
-              ),
+              Text("You're signed in", style: context.textTheme.headlineSmall),
               const SizedBox(height: 8),
               Text(
                 user?.phoneNumber ?? '',
@@ -111,6 +109,14 @@ class HomeScreen extends ConsumerWidget {
                 icon: const Icon(Icons.visibility_outlined),
                 label: const Text('Recent visitors'),
               ),
+              if (isAdmin) ...<Widget>[
+                const SizedBox(height: 12),
+                FilledButton.tonalIcon(
+                  onPressed: () => context.pushNamed(AppRoute.admin.routeName),
+                  icon: const Icon(Icons.admin_panel_settings_outlined),
+                  label: const Text('Admin console'),
+                ),
+              ],
               const SizedBox(height: 12),
               FilledButton.tonalIcon(
                 onPressed: () => ref.read(authRepositoryProvider).signOut(),

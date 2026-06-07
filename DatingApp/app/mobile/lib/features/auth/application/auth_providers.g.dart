@@ -141,3 +141,66 @@ final class AuthStateChangesProvider
 }
 
 String _$authStateChangesHash() => r'43931ae149743f29a83691cb56ac6211f54a34ae';
+
+/// Live boolean: true when the signed-in user's ID token carries the
+/// `admin: true` custom claim. Yields `false` while loading, signed-out,
+/// or when the token is being refreshed.
+///
+/// Phase 2.4 - the only way for the mobile client to know it can
+/// reach the admin surface. The Cloud Function callables also
+/// re-check the same claim server-side, so a stolen token that
+/// somehow lost the claim by the time the function runs will be
+/// rejected with `permission-denied`.
+
+@ProviderFor(isCurrentUserAdmin)
+final isCurrentUserAdminProvider = IsCurrentUserAdminProvider._();
+
+/// Live boolean: true when the signed-in user's ID token carries the
+/// `admin: true` custom claim. Yields `false` while loading, signed-out,
+/// or when the token is being refreshed.
+///
+/// Phase 2.4 - the only way for the mobile client to know it can
+/// reach the admin surface. The Cloud Function callables also
+/// re-check the same claim server-side, so a stolen token that
+/// somehow lost the claim by the time the function runs will be
+/// rejected with `permission-denied`.
+
+final class IsCurrentUserAdminProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Live boolean: true when the signed-in user's ID token carries the
+  /// `admin: true` custom claim. Yields `false` while loading, signed-out,
+  /// or when the token is being refreshed.
+  ///
+  /// Phase 2.4 - the only way for the mobile client to know it can
+  /// reach the admin surface. The Cloud Function callables also
+  /// re-check the same claim server-side, so a stolen token that
+  /// somehow lost the claim by the time the function runs will be
+  /// rejected with `permission-denied`.
+  IsCurrentUserAdminProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'isCurrentUserAdminProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$isCurrentUserAdminHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    return isCurrentUserAdmin(ref);
+  }
+}
+
+String _$isCurrentUserAdminHash() =>
+    r'd7b389c58230c91a727b3511de3e161bbb59bf4e';
